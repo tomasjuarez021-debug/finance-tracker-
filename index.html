@@ -192,11 +192,16 @@
       .bottom-nav-btn.active{color:var(--accent)}
     }
   </style>
+<script id="SAVED_DATA" type="application/json"></script>
 </head>
 <body>
 
 <header class="mobile-header">
   <div class="mobile-brand">capital<span>.</span></div>
+  <div style="display:flex;gap:6px">
+    <button id="exportBtnMobile" style="border:none;background:var(--accent);color:#0b0e11;font-family:var(--mono);font-size:10px;padding:5px 10px;border-radius:5px;cursor:pointer;font-weight:600">💾</button>
+    <label style="border:1px solid var(--border);background:transparent;color:var(--text2);font-family:var(--mono);font-size:10px;padding:5px 9px;border-radius:5px;cursor:pointer">↑<input type="file" id="importFileMobile" accept=".json" style="display:none"></label>
+  </div>
 </header>
 <nav class="bottom-nav" id="bottomNav"></nav>
 <div class="toast" id="toast"></div>
@@ -210,6 +215,10 @@
       <div class="k">Capital total</div>
       <div id="capitalTotal" class="v">$0,00</div>
       <div id="capitalNeto" class="sub ok">+$0,00 neto</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+      <button id="exportBtn" class="btn btn-accent" style="width:100%;font-size:11px;padding:7px">💾 GUARDAR ARCHIVO</button>
+      <label id="importLabel" class="btn btn-ghost" style="width:100%;font-size:11px;padding:7px;text-align:center;cursor:pointer">↑ RESTAURAR BACKUP<input type="file" id="importFile" accept=".json" style="display:none"></label>
     </div>
   </aside>
   <main class="main">
@@ -254,54 +263,6 @@ const state = {
   quotes:  load('ct_quotes',  {usd:null,usdt:null,btc:null,lastFetch:null}),
 };
 
-// ─── QUOTES ───
-async function fetchQuotes(){
-  const now=Date.now();
-  if(state.quotes.lastFetch && now-state.quotes.lastFetch < 600000) return;
-  let anyUpdated = false;
-
-  // Intentar múltiples APIs con CORS abierto
-  // USD blue — intentar varias fuentes
-  const usdSources = [
-    async () => {
-      const r = await fetch('https://api.bluelytics.com.ar/v2/latest', {mode:'cors'});
-      if(!r.ok) throw 0;
-      const d = await r.json();
-      return Number(d?.blue?.value_sell)||null;
-    },
-    async () => {
-      // Dolarito API — alternativa con CORS
-      const r = await fetch('https://dolarito.ar/api/informes/banks?currency=informal', {mode:'cors'});
-      if(!r.ok) throw 0;
-      const d = await r.json();
-      return Number(d?.[0]?.venta)||null;
-    }
-  ];
-  for(const src of usdSources){
-    try {
-      const val = await src();
-      if(val){ state.quotes.usd = val; anyUpdated = true; break; }
-    } catch(e){}
-  }
-
-  // BTC y USDT en USD — CryptoCompare tiene CORS abierto
-  try {
-    const r = await fetch('https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,USDT&tsyms=USD', {mode:'cors'});
-    if(r.ok){
-      const d = await r.json();
-      if(d?.BTC?.USD){ state.quotes.btc = Number(d.BTC.USD); anyUpdated = true; }
-      if(d?.USDT?.USD){ state.quotes.usdt = Number(d.USDT.USD); anyUpdated = true; }
-    }
-  } catch(e){}
-
-  if(anyUpdated){
-    state.quotes.lastFetch = now;
-    save('ct_quotes', state.quotes);
-    if(state.tab==='activos') renderActivos();
-    updateSidebar();
-  }
-}
-
 function walletValueARS(w){
   const saldo=Number(w.saldo||0);
   const usd=state.quotes.usd||null;
@@ -319,13 +280,71 @@ function fmtQuote(label, val, suffix=''){
   return `<span>${label}: <span style="color:var(--accent)">$${Number(val).toLocaleString('es-AR',{maximumFractionDigits:0})}${suffix}</span></span>`;
 }
 
-// ─── UTILS ───
-function load(k,fb){ try{return JSON.parse(localStorage.getItem(k))??fb;}catch{return fb;} }
-function save(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
-function fmt(n,mono=true){ return `$${Number(n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}`; }
+// ─── PERSISTENCIA — SAFARI COMPATIBLE ───
+// Estrategia: los datos viven dentro del propio archivo HTML en <script id="SAVED_DATA">.
+// Al guardar: (1) localStorage para sesión inmediata.
+//             (2) genera y descarga automáticamente el HTML actualizado con los datos embebidos.
+// El usuario reemplaza el archivo descargado con el anterior → datos siempre adentro del HTML.
+
+let _saveTimer = null;
+let _pendingDownload = false;
+
+function load(k, fb){
+  // Primero leer desde el bloque embebido en este mismo HTML
+  try {
+    const el = document.getElementById('SAVED_DATA');
+    if(el && el.textContent.trim()){
+      const all = JSON.parse(el.textContent);
+      if(all[k] !== undefined) return all[k];
+    }
+  } catch(e){}
+  // Fallback: localStorage (misma sesión)
+  try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch { return fb; }
+}
+
+function save(k, v){
+  localStorage.setItem(k, JSON.stringify(v));
+}
+
+function buildUpdatedHTML(){
+  const allData = {
+    ct_txns:    state.txns,
+    ct_wallets: state.wallets,
+    ct_invest:  state.invest,
+    ct_quotes:  state.quotes,
+  };
+  const dataJSON = JSON.stringify(allData);
+  const html = document.documentElement.outerHTML;
+  // Reemplazar el bloque SAVED_DATA con los datos actuales
+  const updated = html.replace(
+    /<script id="SAVED_DATA"[^>]*>[\s\S]*?<\/script>/,
+    `<script id="SAVED_DATA" type="application/json">${dataJSON}<\/script>`
+  );
+  return '<!DOCTYPE html>\n' + updated;
+}
+
+function autoSaveHTML(){
+  // Solo descargar si hay datos reales cargados
+  if(!state.txns.length && !state.wallets.length) return;
+  downloadHTML();
+}
+
+function downloadHTML(){
+  const html = buildUpdatedHTML();
+  const blob = new Blob([html], {type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'capital.html';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('💾 capital.html guardado — reemplazá el archivo anterior');
+}
+
+function fmt(n){ return `$${Number(n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}`; }
 function fmtPct(n){ return `${Number(n||0).toFixed(2)}%`; }
 function todayStr(){ return new Date().toISOString().split('T')[0]; }
-function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
 function groupByCat(tipo){
   const m={};
   state.txns.filter(t=>t.tipo===tipo).forEach(t=>m[t.categoria]=(m[t.categoria]||0)+Number(t.monto));
@@ -362,25 +381,28 @@ function applyTxnToWallet(txn, walletId, multiplier=1){
 }
 
 // ─── PROJECTED YIELD ───
-// Compuesto: capitalización DIARIA (siempre > simple)
-// Simple: capital × tna% × proporción del año
-function proyectar(capital, tna, meses, compuesto=true){
-  const dias = Math.round(meses * 365 / 12);
-  if(compuesto){
-    const ted = tna / 100 / 365; // tasa efectiva diaria
-    return capital * Math.pow(1 + ted, dias);
+// Compuesto mensual: ciclo iterativo explícito mes a mes
+// Simple: capital × (TNA/100) × (meses/12)
+function proyectar(capital, tna_pct, meses, compuesto){
+  const cap = Number(capital) || 0;
+  const tna = Number(tna_pct) || 0;
+  const m   = Number(meses)   || 0;
+  if(cap <= 0 || tna <= 0 || m <= 0) return cap;
+
+  if(compuesto === true){
+    // Ciclo explícito: cada mes suma los intereses al saldo
+    let saldo = cap;
+    const tasaMensual = tna / 100 / 12;
+    for(let i = 0; i < m; i++){
+      saldo = saldo + saldo * tasaMensual;
+    }
+    return saldo;
   } else {
-    return capital * (1 + (tna / 100) * (meses / 12));
+    // Interés simple: lineal
+    return cap + cap * (tna / 100) * (m / 12);
   }
 }
 
-// ─── UTILS ───
-function load(k,fb){ try{return JSON.parse(localStorage.getItem(k))??fb;}catch{return fb;} }
-function save(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
-function fmt(n,mono=true){ return `$${Number(n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}`; }
-function fmtPct(n){ return `${Number(n||0).toFixed(2)}%`; }
-function todayStr(){ return new Date().toISOString().split('T')[0]; }
-function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function groupByCat(tipo){
   const m={};
   state.txns.filter(t=>t.tipo===tipo).forEach(t=>m[t.categoria]=(m[t.categoria]||0)+Number(t.monto));
@@ -414,18 +436,6 @@ function applyTxnToWallet(txn, walletId, multiplier=1){
   const delta = Number(txn.monto) * multiplier * (txn.tipo==='ingreso'?1:-1);
   w.saldo = Number(w.saldo||0) + delta;
   save('ct_wallets', state.wallets);
-}
-
-// ─── PROJECTED YIELD ───
-function proyectar(capital, tna, meses, compuesto=true){
-  if(compuesto){
-    // Interés compuesto: capitalización mensual
-    const tem = Math.pow(1 + tna/100, 1/12) - 1;
-    return capital * Math.pow(1+tem, meses);
-  } else {
-    // Interés simple
-    return capital * (1 + (tna/100) * (meses/12));
-  }
 }
 
 // ─── QUOTES BAR ───
@@ -887,31 +897,60 @@ function renderActivos(){
           <button id="toggleQuoteForm" class="btn btn-ghost" style="padding:4px 10px;font-size:11px">+ CARGAR</button>
         </div>
       </div>
-      <div id="quoteFormWrap" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:14px">
-        <div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-bottom:8px">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);width:56px;letter-spacing:.5px">USD blue</span>
-          <input id="qiUsd" class="field" type="number" placeholder="${state.quotes.usd||'Ej: 1400'}" step="1">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">ARS</span>
+
+      <!-- Formulario de carga con toggle USD/ARS por paridad -->
+      <div id="quoteFormWrap" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:14px">
+
+        <!-- USD blue: siempre en ARS -->
+        <div style="margin-bottom:12px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;margin-bottom:6px">USD BLUE</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="qiUsd" class="field" type="number" placeholder="${state.quotes.usd||'Ej: 1400'}" step="1" style="flex:1">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap">ARS por USD</span>
+          </div>
         </div>
-        <div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-bottom:8px">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);width:56px;letter-spacing:.5px">USDT</span>
-          <input id="qiUsdt" class="field" type="number" placeholder="${state.quotes.usdt||'Ej: 0.9998'}" step="0.0001">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">USD</span>
+
+        <!-- USDT: toggle USD o ARS -->
+        <div style="margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px">USDT</span>
+            <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px;gap:2px">
+              <button id="usdt-unit-usd" class="seg-btn active" style="padding:2px 8px;font-size:10px;border-radius:3px">USD</button>
+              <button id="usdt-unit-ars" class="seg-btn" style="padding:2px 8px;font-size:10px;border-radius:3px">ARS</button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="qiUsdt" class="field" type="number" placeholder="${state.quotes.usdt||'Ej: 0.9998'}" step="0.0001" style="flex:1">
+            <span id="usdt-unit-label" style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap">USD por USDT</span>
+          </div>
         </div>
-        <div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-bottom:12px">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);width:56px;letter-spacing:.5px">BTC</span>
-          <input id="qiBtc" class="field" type="number" placeholder="${state.quotes.btc||'Ej: 83000'}" step="1">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">USD</span>
+
+        <!-- BTC: toggle USD o ARS -->
+        <div style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px">BTC</span>
+            <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px;gap:2px">
+              <button id="btc-unit-usd" class="seg-btn active" style="padding:2px 8px;font-size:10px;border-radius:3px">USD</button>
+              <button id="btc-unit-ars" class="seg-btn" style="padding:2px 8px;font-size:10px;border-radius:3px">ARS</button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="qiBtc" class="field" type="number" placeholder="${state.quotes.btc||'Ej: 83000'}" step="1" style="flex:1">
+            <span id="btc-unit-label" style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap">USD por BTC</span>
+          </div>
         </div>
+
         <button id="qiSave" class="btn btn-accent" style="width:100%">GUARDAR</button>
       </div>
+
+      <!-- Listado -->
       <div style="display:grid;grid-template-columns:2fr 2fr 2fr 2fr;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;padding:0 8px 8px;border-bottom:1px solid var(--border)">
         <span>PAR</span><span style="text-align:right">PRECIO (ARS)</span><span style="text-align:right">PRECIO (USD)</span><span style="text-align:right">ESTADO</span>
       </div>
       ${[
         {par:'USD / ARS', arsVal:state.quotes.usd, usdVal:1, ok:!!state.quotes.usd},
         {par:'USDT / ARS', arsVal:state.quotes.usdt&&state.quotes.usd?state.quotes.usdt*state.quotes.usd:null, usdVal:state.quotes.usdt, ok:!!(state.quotes.usdt&&state.quotes.usd)},
-        {par:'BTC / ARS', arsVal:state.quotes.btc&&state.quotes.usd?state.quotes.btc*state.quotes.usd:null, usdVal:state.quotes.btc, ok:!!(state.quotes.btc&&state.quotes.usd)},
+        {par:'BTC / ARS',  arsVal:state.quotes.btc&&state.quotes.usd?state.quotes.btc*state.quotes.usd:null,  usdVal:state.quotes.btc,  ok:!!(state.quotes.btc&&state.quotes.usd)},
       ].map(r=>`
         <div style="display:grid;grid-template-columns:2fr 2fr 2fr 2fr;font-family:var(--mono);font-size:12px;align-items:center;padding:12px 8px;border-bottom:1px solid var(--border)">
           <span style="font-weight:500;color:var(--text)">${r.par}</span>
@@ -934,18 +973,67 @@ function renderActivos(){
     wrap.style.display=open?'block':'none';
     btn.textContent=open?'✕ CERRAR':'+ CARGAR';
   };
+
+  // Toggle USDT unidad
+  let usdtInARS = false;
+  document.getElementById('usdt-unit-usd').onclick=()=>{
+    usdtInARS=false;
+    document.getElementById('usdt-unit-usd').classList.add('active');
+    document.getElementById('usdt-unit-ars').classList.remove('active');
+    document.getElementById('usdt-unit-label').textContent='USD por USDT';
+    document.getElementById('qiUsdt').placeholder=state.quotes.usdt||'Ej: 0.9998';
+    document.getElementById('qiUsdt').step='0.0001';
+  };
+  document.getElementById('usdt-unit-ars').onclick=()=>{
+    usdtInARS=true;
+    document.getElementById('usdt-unit-ars').classList.add('active');
+    document.getElementById('usdt-unit-usd').classList.remove('active');
+    document.getElementById('usdt-unit-label').textContent='ARS por USDT';
+    const arsVal = state.quotes.usdt&&state.quotes.usd?Math.round(state.quotes.usdt*state.quotes.usd):'';
+    document.getElementById('qiUsdt').placeholder=arsVal||'Ej: 1398';
+    document.getElementById('qiUsdt').step='1';
+  };
+
+  // Toggle BTC unidad
+  let btcInARS = false;
+  document.getElementById('btc-unit-usd').onclick=()=>{
+    btcInARS=false;
+    document.getElementById('btc-unit-usd').classList.add('active');
+    document.getElementById('btc-unit-ars').classList.remove('active');
+    document.getElementById('btc-unit-label').textContent='USD por BTC';
+    document.getElementById('qiBtc').placeholder=state.quotes.btc||'Ej: 83000';
+    document.getElementById('qiBtc').step='1';
+  };
+  document.getElementById('btc-unit-ars').onclick=()=>{
+    btcInARS=true;
+    document.getElementById('btc-unit-ars').classList.add('active');
+    document.getElementById('btc-unit-usd').classList.remove('active');
+    document.getElementById('btc-unit-label').textContent='ARS por BTC';
+    const arsVal = state.quotes.btc&&state.quotes.usd?Math.round(state.quotes.btc*state.quotes.usd):'';
+    document.getElementById('qiBtc').placeholder=arsVal||'Ej: 116000000';
+    document.getElementById('qiBtc').step='1000';
+  };
+
   document.getElementById('qiSave').onclick=()=>{
-    const u=Number(document.getElementById('qiUsd').value);
-    const ut=Number(document.getElementById('qiUsdt').value);
-    const b=Number(document.getElementById('qiBtc').value);
-    if(u>0) state.quotes.usd=u;
-    if(ut>0) state.quotes.usdt=ut;
-    if(b>0) state.quotes.btc=b;
-    state.quotes.lastFetch=Date.now();
-    save('ct_quotes',state.quotes);
+    const u  = Number(document.getElementById('qiUsd').value);
+    const ut = Number(document.getElementById('qiUsdt').value);
+    const b  = Number(document.getElementById('qiBtc').value);
+    if(u>0) state.quotes.usd = u;
+    if(ut>0){
+      if(usdtInARS && u>0) state.quotes.usdt = ut/u;       // ARS→USD
+      else if(usdtInARS && state.quotes.usd) state.quotes.usdt = ut/state.quotes.usd;
+      else state.quotes.usdt = ut;                           // ya en USD
+    }
+    if(b>0){
+      if(btcInARS && u>0) state.quotes.btc = b/u;           // ARS→USD
+      else if(btcInARS && state.quotes.usd) state.quotes.btc = b/state.quotes.usd;
+      else state.quotes.btc = b;                             // ya en USD
+    }
+    state.quotes.lastFetch = Date.now();
+    save('ct_quotes', state.quotes);
     renderActivos();
     updateSidebar();
-    showToast('Cotizaciones actualizadas');
+    showToast('Cotizaciones guardadas');
   };
   document.getElementById('addWallet').onclick=()=>{
     const nombre=document.getElementById('walletNombre').value.trim();
@@ -1064,12 +1152,12 @@ function renderInversiones(){
             ${state.invest.length ? state.invest.map((inv,i)=>{
               const color=PALETTE[i%PALETTE.length];
               const cap=Number(inv.capital||0);
-              const cmp = inv.compuesto !== false; // default true
-              const r3=proyectar(cap,Number(inv.tna),3,cmp)-cap;
-              const r6=proyectar(cap,Number(inv.tna),6,cmp)-cap;
-              const r12=proyectar(cap,Number(inv.tna),12,cmp)-cap;
-              // Also calculate simple for comparison if compound
-              const r12s = cmp ? proyectar(cap,Number(inv.tna),12,false)-cap : null;
+              const tna=Number(inv.tna||0);
+              const cmp = inv.compuesto === true; // solo true si se guardó explícitamente como true
+              const r3  = proyectar(cap, tna, 3,  cmp) - cap;
+              const r6  = proyectar(cap, tna, 6,  cmp) - cap;
+              const r12 = proyectar(cap, tna, 12, cmp) - cap;
+              const r12s = proyectar(cap, tna, 12, false) - cap; // siempre simple para comparar
               const tipos={'plazo_fijo':'PF','fci':'FCI','accion':'ACC','cripto':'CRIPTO','cedear':'CEDEAR','otro':'OTRO'};
               return `
                 <div class="invest-card">
@@ -1107,10 +1195,10 @@ function renderInversiones(){
                         <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">total ${fmt(cap+r12)}</div>
                       </div>
                     </div>
-                    ${cmp && cap > 0 ? `
+                    ${cap > 0 ? `
                     <div class="projected-row" style="border-top:1px dashed var(--border);margin-top:4px;padding-top:8px">
                       <span style="color:var(--text3);font-size:10px">vs. interés simple 12m</span>
-                      <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">+${fmt(r12s)} <span style="color:var(--green);font-size:10px">(+${fmt(r12-r12s)} extra)</span></span>
+                      <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">+${fmt(r12s)} <span style="color:${r12>r12s?'var(--green)':'var(--text3)'};font-size:10px">(${r12>r12s?'+':'-'}${fmt(Math.abs(r12-r12s))} ${r12>r12s?'extra':'menos'})</span></span>
                     </div>` : ''}
                   </div>
                   <div style="margin-top:10px;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap">
@@ -1200,7 +1288,7 @@ function renderInversiones(){
       </div>`;
     document.getElementById('simResult').innerHTML=`
       <div style="background:var(--bg);border-radius:6px;border:1px solid var(--border);padding:10px">
-        <div class="invest-meta" style="margin-bottom:8px">CAPITAL: ${fmt(cap)} · ${fmtPct(tna)} TNA · INT. ${simCompuesto?'COMPUESTO DIARIO':'SIMPLE'}</div>
+        <div class="invest-meta" style="margin-bottom:8px">CAPITAL: ${fmt(cap)} · ${fmtPct(tna)} TNA · INT. ${simCompuesto?'COMPUESTO MENSUAL':'SIMPLE'}</div>
         ${fmtRow(3,r3)}${fmtRow(6,r6)}${fmtRow(12,r12)}${fmtRow(24,r24)}
         <div class="projected-row" style="border-top:1px dashed var(--border);margin-top:4px;padding-top:8px">
           <span style="color:var(--text3);font-size:10px">vs. ${simCompuesto?'simple':'compuesto'} a 12m</span>
@@ -1270,16 +1358,38 @@ function render(){
 
 document.getElementById('sidebarCollapse').onclick=()=>{state.sidebarOpen=!state.sidebarOpen;renderSidebarShell()};
 
-// Migrar inversiones viejas sin campo compuesto
-let migrated=false;
-state.invest.forEach(i=>{ if(i.compuesto===undefined){ i.compuesto=true; migrated=true; } });
-if(migrated) save('ct_invest',state.invest);
+// ─── EXPORT / IMPORT ───
+document.getElementById('exportBtn').onclick = ()=>downloadHTML();
 
+document.getElementById('importFile').onchange=(e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try {
+      const data = JSON.parse(ev.target.result);
+      if(data.ct_txns)    { state.txns    = data.ct_txns;    localStorage.setItem('ct_txns',    JSON.stringify(state.txns)); }
+      if(data.ct_wallets) { state.wallets = data.ct_wallets; localStorage.setItem('ct_wallets', JSON.stringify(state.wallets)); }
+      if(data.ct_invest)  { state.invest  = data.ct_invest;  localStorage.setItem('ct_invest',  JSON.stringify(state.invest)); }
+      if(data.ct_quotes)  { state.quotes  = data.ct_quotes;  localStorage.setItem('ct_quotes',  JSON.stringify(state.quotes)); }
+      render();
+      showToast('✓ Datos restaurados');
+    } catch(err) {
+      alert('Archivo inválido.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+};
+
+const exportBtnMobile = document.getElementById('exportBtnMobile');
+if(exportBtnMobile) exportBtnMobile.onclick = ()=>downloadHTML();
+const importFileMobile = document.getElementById('importFileMobile');
+if(importFileMobile) importFileMobile.onchange = (e)=>{
+  document.getElementById('importFile').files = e.target.files;
+  document.getElementById('importFile').dispatchEvent(new Event('change'));
+};
 applyDailyYields();
-// Forzar recarga de cotizaciones con las nuevas APIs
-state.quotes.lastFetch = null;
-save('ct_quotes', state.quotes);
-fetchQuotes();
 render();
 </script>
 </body>

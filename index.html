@@ -198,10 +198,6 @@
 
 <header class="mobile-header">
   <div class="mobile-brand">capital<span>.</span></div>
-  <div style="display:flex;gap:6px">
-    <button id="exportBtnMobile" style="border:none;background:var(--accent);color:#0b0e11;font-family:var(--mono);font-size:10px;padding:5px 10px;border-radius:5px;cursor:pointer;font-weight:600">💾</button>
-    <label style="border:1px solid var(--border);background:transparent;color:var(--text2);font-family:var(--mono);font-size:10px;padding:5px 9px;border-radius:5px;cursor:pointer">↑<input type="file" id="importFileMobile" accept=".json" style="display:none"></label>
-  </div>
 </header>
 <nav class="bottom-nav" id="bottomNav"></nav>
 <div class="toast" id="toast"></div>
@@ -345,30 +341,33 @@ function fmt(n){ return `$${Number(n||0).toLocaleString('es-AR',{minimumFraction
 function fmtPct(n){ return `${Number(n||0).toFixed(2)}%`; }
 function todayStr(){ return new Date().toISOString().split('T')[0]; }
 function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+// Excluir transacciones de billeteras cripto (BTC/USDT) de totales en ARS
+function isCryptoTxn(t){
+  if(!t.walletId) return false;
+  const w = state.wallets.find(x=>x.id===t.walletId);
+  return w && ['BTC','USDT'].includes(w.moneda);
+}
+
 function groupByCat(tipo){
   const m={};
-  state.txns.filter(t=>t.tipo===tipo).forEach(t=>m[t.categoria]=(m[t.categoria]||0)+Number(t.monto));
+  state.txns.filter(t=>t.tipo===tipo && !isCryptoTxn(t)).forEach(t=>m[t.categoria]=(m[t.categoria]||0)+Number(t.monto));
   return Object.entries(m).sort((a,b)=>b[1]-a[1]);
 }
 function totals(){
   const totalActivos = state.wallets.reduce((a,w)=>a+Number(w.saldo||0),0);
-  const totalIng    = state.txns.filter(t=>t.tipo==='ingreso').reduce((a,t)=>a+Number(t.monto),0);
-  const totalGasto  = state.txns.filter(t=>t.tipo==='gasto' ).reduce((a,t)=>a+Number(t.monto),0);
+  const txnsFiat = state.txns.filter(t=>!isCryptoTxn(t));
+  const totalIng    = txnsFiat.filter(t=>t.tipo==='ingreso').reduce((a,t)=>a+Number(t.monto),0);
+  const totalGasto  = txnsFiat.filter(t=>t.tipo==='gasto' ).reduce((a,t)=>a+Number(t.monto),0);
   const totalInvest = state.invest.reduce((a,i)=>a+Number(i.capital||0),0);
   return { totalActivos, totalIng, totalGasto, balance: totalIng-totalGasto, totalInvest };
 }
 function txnsByDateMap(){
   const m={};
-  state.txns.forEach(t=>{
+  state.txns.filter(t=>!isCryptoTxn(t)).forEach(t=>{
     if(!m[t.fecha]) m[t.fecha]=0;
     m[t.fecha]+= t.tipo==='ingreso'?Number(t.monto):-Number(t.monto);
   });
   return m;
-}
-function showToast(msg){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),2200);
 }
 
 // ─── APPLY TXN TO WALLET ───
@@ -401,32 +400,6 @@ function proyectar(capital, tna_pct, meses, compuesto){
     // Interés simple: lineal
     return cap + cap * (tna / 100) * (m / 12);
   }
-}
-
-function groupByCat(tipo){
-  const m={};
-  state.txns.filter(t=>t.tipo===tipo).forEach(t=>m[t.categoria]=(m[t.categoria]||0)+Number(t.monto));
-  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
-}
-function totals(){
-  const totalActivos = state.wallets.reduce((a,w)=>a+Number(w.saldo||0),0);
-  const totalIng    = state.txns.filter(t=>t.tipo==='ingreso').reduce((a,t)=>a+Number(t.monto),0);
-  const totalGasto  = state.txns.filter(t=>t.tipo==='gasto' ).reduce((a,t)=>a+Number(t.monto),0);
-  const totalInvest = state.invest.reduce((a,i)=>a+Number(i.capital||0),0);
-  return { totalActivos, totalIng, totalGasto, balance: totalIng-totalGasto, totalInvest };
-}
-function txnsByDateMap(){
-  const m={};
-  state.txns.forEach(t=>{
-    if(!m[t.fecha]) m[t.fecha]=0;
-    m[t.fecha]+= t.tipo==='ingreso'?Number(t.monto):-Number(t.monto);
-  });
-  return m;
-}
-function showToast(msg){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),2200);
 }
 
 // ─── APPLY TXN TO WALLET ───
@@ -604,17 +577,29 @@ function renderResumen(){
     </div>
     <div class="card">
       <div class="section-title">ÚLTIMOS MOVIMIENTOS</div>
-      ${state.txns.length ? state.txns.slice(0,8).map(t=>`
+      ${state.txns.length ? state.txns.slice(0,8).map(t=>{
+        const w = state.wallets.find(x=>x.id===t.walletId);
+        const isCrypto = w && ['BTC','USDT'].includes(w.moneda);
+        const arsVal = isCrypto ? walletValueARS({...w, saldo: t.monto}) : null;
+        const signo = t.tipo==='ingreso'?'+':'-';
+        const montoDisplay = isCrypto
+          ? `${signo}${Number(t.monto).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:8})} ${w.moneda}`
+          : `${signo}${fmt(t.monto)}`;
+        return `
         <div class="row-hover">
           <div style="display:flex;align-items:center;gap:12px">
             <div style="width:6px;height:6px;border-radius:50%;background:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}"></div>
             <div>
               <div style="font-family:var(--mono);font-size:12px;font-weight:500">${esc(t.categoria)}</div>
-              <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px">${esc(t.fecha)}${t.descripcion?' · '+esc(t.descripcion):''}${t.walletId?` · ${esc(state.wallets.find(w=>w.id===t.walletId)?.nombre||'')}`:''}</div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px">${esc(t.fecha)}${t.descripcion?' · '+esc(t.descripcion):''}${w?' · '+esc(w.nombre):''}</div>
             </div>
           </div>
-          <span class="${t.tipo==='ingreso'?'amount-positive':'amount-negative'}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</span>
-        </div>`).join('') : `<div class="empty">SIN MOVIMIENTOS AÚN</div>`}
+          <div style="text-align:right">
+            <span class="${t.tipo==='ingreso'?'amount-positive':'amount-negative'}">${montoDisplay}</span>
+            ${isCrypto && arsVal !== null ? `<div style="font-family:var(--mono);font-size:10px;color:var(--text3)">≈ ${signo}${fmt(arsVal)}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('') : `<div class="empty">SIN MOVIMIENTOS AÚN</div>`}
     </div>
   `;
   root.querySelectorAll('[data-date]').forEach(el=>el.onclick=()=>{state.calDate=el.dataset.date;renderResumen();});
@@ -660,6 +645,15 @@ function renderMovimientos(){
         <div style="max-height:520px;overflow:auto">
           ${state.txns.length ? state.txns.map(t=>{
             const w=state.wallets.find(x=>x.id===t.walletId);
+            const isCrypto = w && ['BTC','USDT'].includes(w.moneda);
+            const arsVal = isCrypto ? walletValueARS({...w, saldo: t.monto}) : null;
+            const signo = t.tipo==='ingreso'?'+':'-';
+            const montoDisplay = isCrypto
+              ? `${signo}${Number(t.monto).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:8})} ${w.moneda}`
+              : `${signo}${fmt(t.monto)}`;
+            const arsDisplay = isCrypto && arsVal !== null
+              ? `<div style="font-family:var(--mono);font-size:10px;color:var(--text3)">≈ ${signo}${fmt(arsVal)}</div>`
+              : '';
             return `
             <div class="row-hover">
               <div style="display:flex;align-items:center;gap:10px">
@@ -674,7 +668,10 @@ function renderMovimientos(){
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:8px">
-                <span class="${t.tipo==='ingreso'?'amount-positive':'amount-negative'}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</span>
+                <div style="text-align:right">
+                  <span class="${t.tipo==='ingreso'?'amount-positive':'amount-negative'}">${montoDisplay}</span>
+                  ${arsDisplay}
+                </div>
                 <button class="btn-danger" data-del-txn="${t.id}">✕</button>
               </div>
             </div>`

@@ -167,9 +167,6 @@
     .wallet-pill:hover{border-color:var(--border2);color:var(--text)}
     .wallet-pill.selected{border-color:var(--accent);color:var(--accent);background:rgba(240,185,11,.06)}
 
-    /* ─── BOTTOM NAV ─── */
-    .bottom-nav{display:none}
-
     /* ─── MOBILE HEADER ─── */
     .mobile-header{display:none}
 
@@ -200,10 +197,6 @@
 
 <header class="mobile-header">
   <div class="mobile-brand">capital<span>.</span></div>
-  <div class="mobile-capital">
-    <div id="mobileCapitalTotal" class="v">$0,00</div>
-    <div id="mobileCapitalNeto" class="sub ok">+$0,00 neto</div>
-  </div>
 </header>
 <nav class="bottom-nav" id="bottomNav"></nav>
 <div class="toast" id="toast"></div>
@@ -258,7 +251,73 @@ const state = {
   txns:    load('ct_txns',    []),
   wallets: load('ct_wallets', INIT_WALLETS),
   invest:  load('ct_invest',  INIT_INVEST),
+  quotes:  load('ct_quotes',  {usd:null,usdt:null,btc:null,lastFetch:null}),
 };
+
+// ─── QUOTES ───
+async function fetchQuotes(){
+  const now=Date.now();
+  if(state.quotes.lastFetch && now-state.quotes.lastFetch < 600000) return;
+  let anyUpdated = false;
+
+  // Intentar múltiples APIs con CORS abierto
+  // USD blue — intentar varias fuentes
+  const usdSources = [
+    async () => {
+      const r = await fetch('https://api.bluelytics.com.ar/v2/latest', {mode:'cors'});
+      if(!r.ok) throw 0;
+      const d = await r.json();
+      return Number(d?.blue?.value_sell)||null;
+    },
+    async () => {
+      // Dolarito API — alternativa con CORS
+      const r = await fetch('https://dolarito.ar/api/informes/banks?currency=informal', {mode:'cors'});
+      if(!r.ok) throw 0;
+      const d = await r.json();
+      return Number(d?.[0]?.venta)||null;
+    }
+  ];
+  for(const src of usdSources){
+    try {
+      const val = await src();
+      if(val){ state.quotes.usd = val; anyUpdated = true; break; }
+    } catch(e){}
+  }
+
+  // BTC y USDT en USD — CryptoCompare tiene CORS abierto
+  try {
+    const r = await fetch('https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,USDT&tsyms=USD', {mode:'cors'});
+    if(r.ok){
+      const d = await r.json();
+      if(d?.BTC?.USD){ state.quotes.btc = Number(d.BTC.USD); anyUpdated = true; }
+      if(d?.USDT?.USD){ state.quotes.usdt = Number(d.USDT.USD); anyUpdated = true; }
+    }
+  } catch(e){}
+
+  if(anyUpdated){
+    state.quotes.lastFetch = now;
+    save('ct_quotes', state.quotes);
+    if(state.tab==='activos') renderActivos();
+    updateSidebar();
+  }
+}
+
+function walletValueARS(w){
+  const saldo=Number(w.saldo||0);
+  const usd=state.quotes.usd||null;
+  const btc=state.quotes.btc||null;
+  const usdt=state.quotes.usdt||null;
+  if(w.moneda==='ARS') return saldo;
+  if(w.moneda==='USD' && usd) return saldo*usd;
+  if(w.moneda==='USDT' && usdt && usd) return saldo*usdt*usd;
+  if(w.moneda==='BTC' && btc && usd) return saldo*btc*usd;
+  return null;
+}
+
+function fmtQuote(label, val, suffix=''){
+  if(!val) return `<span style="color:var(--text3)">${label}: —</span>`;
+  return `<span>${label}: <span style="color:var(--accent)">$${Number(val).toLocaleString('es-AR',{maximumFractionDigits:0})}${suffix}</span></span>`;
+}
 
 // ─── UTILS ───
 function load(k,fb){ try{return JSON.parse(localStorage.getItem(k))??fb;}catch{return fb;} }
@@ -303,13 +362,82 @@ function applyTxnToWallet(txn, walletId, multiplier=1){
 }
 
 // ─── PROJECTED YIELD ───
-function proyectar(capital, tna, meses){
-  // TNA → TEM → compound
-  const tem = Math.pow(1 + tna/100, 1/12) - 1;
-  return capital * Math.pow(1+tem, meses);
+// Compuesto: capitalización DIARIA (siempre > simple)
+// Simple: capital × tna% × proporción del año
+function proyectar(capital, tna, meses, compuesto=true){
+  const dias = Math.round(meses * 365 / 12);
+  if(compuesto){
+    const ted = tna / 100 / 365; // tasa efectiva diaria
+    return capital * Math.pow(1 + ted, dias);
+  } else {
+    return capital * (1 + (tna / 100) * (meses / 12));
+  }
 }
 
-// ─── RENDER MENU ───
+// ─── UTILS ───
+function load(k,fb){ try{return JSON.parse(localStorage.getItem(k))??fb;}catch{return fb;} }
+function save(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
+function fmt(n,mono=true){ return `$${Number(n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}`; }
+function fmtPct(n){ return `${Number(n||0).toFixed(2)}%`; }
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function groupByCat(tipo){
+  const m={};
+  state.txns.filter(t=>t.tipo===tipo).forEach(t=>m[t.categoria]=(m[t.categoria]||0)+Number(t.monto));
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+function totals(){
+  const totalActivos = state.wallets.reduce((a,w)=>a+Number(w.saldo||0),0);
+  const totalIng    = state.txns.filter(t=>t.tipo==='ingreso').reduce((a,t)=>a+Number(t.monto),0);
+  const totalGasto  = state.txns.filter(t=>t.tipo==='gasto' ).reduce((a,t)=>a+Number(t.monto),0);
+  const totalInvest = state.invest.reduce((a,i)=>a+Number(i.capital||0),0);
+  return { totalActivos, totalIng, totalGasto, balance: totalIng-totalGasto, totalInvest };
+}
+function txnsByDateMap(){
+  const m={};
+  state.txns.forEach(t=>{
+    if(!m[t.fecha]) m[t.fecha]=0;
+    m[t.fecha]+= t.tipo==='ingreso'?Number(t.monto):-Number(t.monto);
+  });
+  return m;
+}
+function showToast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+// ─── APPLY TXN TO WALLET ───
+function applyTxnToWallet(txn, walletId, multiplier=1){
+  const w = state.wallets.find(x=>x.id===walletId);
+  if(!w) return;
+  const delta = Number(txn.monto) * multiplier * (txn.tipo==='ingreso'?1:-1);
+  w.saldo = Number(w.saldo||0) + delta;
+  save('ct_wallets', state.wallets);
+}
+
+// ─── PROJECTED YIELD ───
+function proyectar(capital, tna, meses, compuesto=true){
+  if(compuesto){
+    // Interés compuesto: capitalización mensual
+    const tem = Math.pow(1 + tna/100, 1/12) - 1;
+    return capital * Math.pow(1+tem, meses);
+  } else {
+    // Interés simple
+    return capital * (1 + (tna/100) * (meses/12));
+  }
+}
+
+// ─── QUOTES BAR ───
+function renderQuotesBar(){
+  const {usd,usdt,btc,lastFetch}=state.quotes;
+  const fmtARS = v => '$'+Number(v).toLocaleString('es-AR',{maximumFractionDigits:0});
+  const el = (id,val) => { const e=document.getElementById(id); if(e) e.textContent=val; };
+  el('qbUsd',  usd ? fmtARS(usd)+' ARS' : '—');
+  el('qbUsdt', usdt&&usd ? fmtARS(usdt*usd)+' ARS' : usdt ? '$'+usdt.toFixed(4)+' USD' : '—');
+  el('qbBtc',  btc&&usd ? fmtARS(btc*usd)+' ARS' : btc ? '$'+Number(btc).toLocaleString('en-US',{maximumFractionDigits:0})+' USD' : '—');
+  el('qbTime', lastFetch ? new Date(lastFetch).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}) : '');
+}
 function renderMenu(){
   const menuEl = document.getElementById('menu');
   menuEl.innerHTML = TABS.map(t=>`
@@ -323,13 +451,18 @@ function renderMenu(){
 // ─── UPDATE SIDEBAR ───
 function updateSidebar(){
   const {totalActivos,balance} = totals();
-  document.getElementById('capitalTotal').textContent = fmt(totalActivos);
+  // Recalc totalActivos including FX conversion
+  const totalARS = state.wallets.reduce((a,w)=>{
+    const v=walletValueARS(w);
+    return a+(v!==null?v:Number(w.saldo||0));
+  },0);
+  document.getElementById('capitalTotal').textContent = fmt(totalARS);
   const el = document.getElementById('capitalNeto');
   el.textContent = `${balance>=0?'+':'-'}${fmt(Math.abs(balance))} neto`;
   el.className='sub '+(balance>=0?'ok':'bad');
   const mct=document.getElementById('mobileCapitalTotal');
   const mcn=document.getElementById('mobileCapitalNeto');
-  if(mct) mct.textContent=fmt(totalActivos);
+  if(mct) mct.textContent=fmt(totalARS);
   if(mcn){mcn.textContent=el.textContent; mcn.className=el.className;}
 
   // Bottom nav
@@ -357,16 +490,24 @@ function renderSidebarShell(){
 
 // ─── PIE CARD ───
 function pieCard(title, data, colors){
-  if(!data.length) return `<div class="card"><div class="section-title">${title}</div><div class="empty">SIN DATOS</div></div>`;
+  if(!data.length) return '';  // No mostrar nada si no hay datos
   const total = data.reduce((a,[,v])=>a+v,0);
-  let cum=-90;
   const cx=56,cy=56,r=46;
-  const slices = data.map(([cat,val],i)=>{
-    const pct=val/total, angle=pct*360;
-    const s=(cum*Math.PI)/180; cum+=angle; const e=(cum*Math.PI)/180;
-    const x1=cx+r*Math.cos(s),y1=cy+r*Math.sin(s),x2=cx+r*Math.cos(e),y2=cy+r*Math.sin(e);
-    return `<path d="M${cx},${cy} L${x1},${y1} A${r},${r},0,${angle>180?1:0},1,${x2},${y2} Z" fill="${colors[i%colors.length]}"></path>`;
-  }).join('');
+  let slices;
+  if(data.length===1){
+    // Un solo elemento: círculo completo
+    slices=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${colors[0]}"></circle>`;
+  } else {
+    let cum=-90;
+    slices = data.map(([cat,val],i)=>{
+      const pct=val/total, angle=pct*360;
+      // Cap angle slightly below 360 to avoid degenerate arc
+      const safeAngle=Math.min(angle,359.99);
+      const s=(cum*Math.PI)/180; cum+=angle; const e=(cum*Math.PI)/180;
+      const x1=cx+r*Math.cos(s),y1=cy+r*Math.sin(s),x2=cx+r*Math.cos(e),y2=cy+r*Math.sin(e);
+      return `<path d="M${cx},${cy} L${x1},${y1} A${r},${r},0,${safeAngle>180?1:0},1,${x2},${y2} Z" fill="${colors[i%colors.length]}"></path>`;
+    }).join('');
+  }
   const legend = data.slice(0,6).map(([cat,val],i)=>`
     <div class="legend-row">
       <div class="legend-left"><span class="sw" style="background:${colors[i%colors.length]}"></span><span class="truncate">${esc(cat)}</span></div>
@@ -376,7 +517,7 @@ function pieCard(title, data, colors){
     <div class="card">
       <div class="section-title">${title}</div>
       <div class="pie-wrap">
-        <svg width="112" height="112" viewBox="0 0 112 112">${slices}<circle cx="56" cy="56" r="20" fill="#161a1f"></circle></svg>
+        <svg width="112" height="112" viewBox="0 0 112 112">${slices}<circle cx="${cx}" cy="${cy}" r="20" fill="#161a1f"></circle></svg>
         <div class="legend">${legend}</div>
       </div>
     </div>`;
@@ -393,6 +534,14 @@ function renderResumen(){
   const daysInMonth=new Date(yy,mm,0).getDate();
   const selectedTxns=state.txns.filter(t=>t.fecha===state.calDate);
 
+  // ── Month stats for selected month ──
+  const monthKey=`${yy}-${String(mm).padStart(2,'0')}`;
+  const monthTxns=state.txns.filter(t=>t.fecha.startsWith(monthKey));
+  const mIng=monthTxns.filter(t=>t.tipo==='ingreso').reduce((a,t)=>a+Number(t.monto),0);
+  const mGas=monthTxns.filter(t=>t.tipo==='gasto').reduce((a,t)=>a+Number(t.monto),0);
+  const mBalance=mIng-mGas;
+  const monthLabel=new Date(yy,mm-1).toLocaleString('es-AR',{month:'long',year:'numeric'});
+
   let cells='';
   ['D','L','M','X','J','V','S'].forEach(d=>cells+=`<div class="cal-head">${d}</div>`);
   for(let i=0;i<firstDay;i++) cells+=`<div></div>`;
@@ -408,26 +557,25 @@ function renderResumen(){
 
   root.innerHTML=`
     <div class="page-title">RESUMEN</div>
-    <div class="cards-3">
-      <div class="card">
-        <div class="stat-label">INGRESOS</div>
-        <div class="stat-val green">${fmt(totalIng)}</div>
-      </div>
-      <div class="card">
-        <div class="stat-label">GASTOS</div>
-        <div class="stat-val red">${fmt(totalGasto)}</div>
-      </div>
-      <div class="card">
-        <div class="stat-label">BALANCE NETO</div>
-        <div class="stat-val ${balance>=0?'green':'red'}">${balance>=0?'+':''}${fmt(balance)}</div>
+
+    <!-- Balance mensual del mes seleccionado -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="stat-label" style="margin-bottom:2px">BALANCE NETO — ${monthLabel.toUpperCase()}</div>
+        <div class="stat-val" style="font-size:28px;color:var(--text)">${mBalance>=0?'+':''}${fmt(mBalance)}</div>
+        <div style="display:grid;grid-template-columns:max-content 1fr;gap:3px 12px;margin-top:4px;font-family:var(--mono);font-size:11px">
+          <span style="color:var(--text3)">INGRESOS</span><span style="color:var(--green)">+${fmt(mIng)}</span>
+          <span style="color:var(--text3)">GASTOS</span><span style="color:var(--red)">-${fmt(mGas)}</span>
+        </div>
       </div>
     </div>
+
     <div class="cards-2">
       <div class="card">
         <div class="section-title">CALENDARIO</div>
         <div class="calendar-top">
           <button id="prevMonth" class="btn btn-ghost" style="padding:4px 10px">‹</button>
-          <span style="font-family:var(--mono);font-size:12px;color:var(--text2);letter-spacing:.5px">${new Date(yy,mm-1).toLocaleString('es-AR',{month:'long',year:'numeric'}).toUpperCase()}</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--text2);letter-spacing:.5px">${monthLabel.toUpperCase()}</span>
           <button id="nextMonth" class="btn btn-ghost" style="padding:4px 10px">›</button>
         </div>
         <div class="cal-grid">${cells}</div>
@@ -440,8 +588,8 @@ function renderResumen(){
           </div>`).join('') : `<div class="empty" style="padding:8px 0">SIN MOVIMIENTOS</div>`}
       </div>
       <div style="display:flex;flex-direction:column;gap:12px">
-        ${pieCard('GASTOS / CATEGORÍA', gastos, PALETTE)}
-        ${pieCard('INGRESOS / CATEGORÍA', ingresos, ['#0ecb81','#f0b90b','#4a9eff','#9b6dff','#f6465d','#14b8a6'])}
+        ${pieCard('GASTOS / CATEGORÍA', gastos, ['#f6465d','#ff8099','#c0392b','#e74c3c','#ff6b81','#992d22','#ff4757','#d63031'])}
+        ${pieCard('INGRESOS / CATEGORÍA', ingresos, ['#0ecb81','#26d994','#1aaf6e','#00e676','#52ffb8','#0a8a58','#43e97b','#38f9d7'])}
       </div>
     </div>
     <div class="card">
@@ -472,19 +620,8 @@ function renderMovimientos(){
     <button class="wallet-pill ${state.formWallet===w.id?'selected':''}" data-wpill="${w.id}">${esc(w.nombre)} <span style="color:var(--text3)">(${fmt(w.saldo)})</span></button>
   `).join('');
 
-  // Monthly summary
-  const today=new Date(); const currMonthKey=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
-  const monthTxns=state.txns.filter(t=>t.fecha.startsWith(currMonthKey));
-  const mIng=monthTxns.filter(t=>t.tipo==='ingreso').reduce((a,t)=>a+Number(t.monto),0);
-  const mGas=monthTxns.filter(t=>t.tipo==='gasto').reduce((a,t)=>a+Number(t.monto),0);
-
   root.innerHTML=`
     <div class="page-title">MOVIMIENTOS</div>
-    <div class="cards-3" style="margin-bottom:16px">
-      <div class="card"><div class="stat-label">MES ACTUAL ING.</div><div class="stat-val green">${fmt(mIng)}</div></div>
-      <div class="card"><div class="stat-label">MES ACTUAL GAS.</div><div class="stat-val red">${fmt(mGas)}</div></div>
-      <div class="card"><div class="stat-label">MES ACTUAL NETO</div><div class="stat-val ${mIng-mGas>=0?'green':'red'}">${mIng-mGas>=0?'+':''}${fmt(mIng-mGas)}</div></div>
-    </div>
     <div class="content-grid">
       <div class="card">
         <div class="section-title">NUEVO MOVIMIENTO</div>
@@ -498,9 +635,9 @@ function renderMovimientos(){
           <div><label class="label">Fecha</label><input id="txnFecha" class="field" type="date" value="${todayStr()}"></div>
           <div><label class="label">Descripción</label><input id="txnDesc" class="field" type="text" placeholder="Opcional"></div>
           <div>
-            <label class="label">Vincular billetera</label>
+            <label class="label">Billetera <span style="color:var(--red)">*</span></label>
             <div class="wallet-pills" id="walletPillsContainer">${walletPills}</div>
-            <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:5px">El saldo se ajustará automáticamente.</div>
+            ${!state.formWallet ? `<div id="walletError" style="font-family:var(--mono);font-size:10px;color:var(--red);margin-top:5px">Seleccioná una billetera para continuar.</div>` : `<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:5px">El saldo se ajustará automáticamente.</div>`}
           </div>
           <button id="addTxn" class="btn btn-accent" style="width:100%;margin-top:4px">REGISTRAR</button>
         </div>
@@ -542,7 +679,7 @@ function renderMovimientos(){
 
   root.querySelectorAll('[data-wpill]').forEach(btn=>btn.onclick=()=>{
     const id=Number(btn.dataset.wpill);
-    state.formWallet = state.formWallet===id ? null : id;
+    state.formWallet = id; // siempre selecciona, nunca deselecciona
     renderMovimientos();
   });
 
@@ -552,6 +689,7 @@ function renderMovimientos(){
     const fecha=document.getElementById('txnFecha').value||todayStr();
     const descripcion=document.getElementById('txnDesc').value.trim();
     if(!monto||monto<=0) return;
+    if(!state.formWallet){ renderMovimientos(); return; } // billetera obligatoria
     const txn={id:Date.now(),tipo:state.formTipo,categoria,monto,descripcion,fecha,walletId:state.formWallet||null};
     state.txns.unshift(txn);
     save('ct_txns',state.txns);
@@ -575,43 +713,129 @@ function renderMovimientos(){
 // ─── RENDER ACTIVOS ───
 function renderActivos(){
   const root=document.getElementById('tab-activos');
-  const {totalActivos}=totals();
-  const virtual=state.wallets.filter(w=>['virtual','cripto'].includes(w.tipo)).reduce((a,w)=>a+Number(w.saldo||0),0);
-  const fisico=state.wallets.filter(w=>w.tipo==='físico').reduce((a,w)=>a+Number(w.saldo||0),0);
-  const invertido=state.wallets.filter(w=>w.tipo==='inversión').reduce((a,w)=>a+Number(w.saldo||0),0);
+  const {usd,usdt,btc,lastFetch}=state.quotes;
+
+  // BTC/USDT parity derived from: (BTC en ARS) / (USDT en ARS)
+  // Si btcARS = btc * usd  y  usdtARS = usdt * usd
+  // entonces btcUsdt = btcARS / usdtARS = btc / usdt
+  const btcUsdt = (btc && usdt && usdt > 0) ? btc / usdt : null;
+
+  // Por cada wallet calcular su valor en ARS, USD y USDT
+  function walletUSD(w){
+    const s=Number(w.saldo||0);
+    if(w.moneda==='ARS') return usd ? s/usd : null;
+    if(w.moneda==='USD') return s;
+    if(w.moneda==='USDT') return usdt ? s*usdt : s; // USDT ≈ USD
+    if(w.moneda==='BTC') return btc ? s*btc : null;
+    return null;
+  }
+  function walletUSDT(w){
+    const usdVal=walletUSD(w);
+    if(usdVal===null) return null;
+    return usdt ? usdVal/usdt : usdVal; // USDT ≈ 1 USD si usdt=1
+  }
+  function isCrypto(w){ return ['BTC','USDT','ETH'].includes(w.moneda) || w.tipo==='cripto'; }
+
+  // Totales
+  const totalARS = state.wallets.reduce((a,w)=>{
+    const v=walletValueARS(w); return a+(v!==null?v:Number(w.saldo||0));
+  },0);
+  const totalUSD = usd ? state.wallets.reduce((a,w)=>{
+    const v=walletUSD(w); return a+(v!==null?v:0);
+  },0) : null;
+  const totalUSDT = usdt ? state.wallets.reduce((a,w)=>{
+    const v=walletUSDT(w); return a+(v!==null?v:0);
+  },0) : null;
+
+  // Separar en ARS, USD y cripto (en USDT)
+  const arsWallets  = state.wallets.filter(w=>w.moneda==='ARS' && !isCrypto(w));
+  const usdWallets  = state.wallets.filter(w=>['USD','EUR'].includes(w.moneda));
+  const cryptoWallets = state.wallets.filter(w=>isCrypto(w));
+
+  const subTotalARS  = arsWallets.reduce((a,w)=>a+Number(w.saldo||0),0);
+  const subTotalUSD  = usdWallets.reduce((a,w)=>{ const v=walletUSD(w); return a+(v||0); },0);
+  const subTotalCryptoUSDT = cryptoWallets.reduce((a,w)=>{ const v=walletUSDT(w); return a+(v||0); },0);
+
+  const fmtUSD = n => '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const timeStr=lastFetch?new Date(lastFetch).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'';
+  const hasCotiz = !!(usd);
 
   root.innerHTML=`
     <div class="page-title">ACTIVOS</div>
-    <div class="cards-3">
-      <div class="card"><div class="stat-label">TOTAL ACTIVOS</div><div class="stat-val yellow">${fmt(totalActivos)}</div></div>
-      <div class="card"><div class="stat-label">VIRTUAL / CRIPTO</div><div class="stat-val">${fmt(virtual)}</div></div>
-      <div class="card"><div class="stat-label">FÍSICO / EFECTIVO</div><div class="stat-val">${fmt(fisico)}</div></div>
+
+    <!-- Card principal total -->
+    <div class="card" style="margin-bottom:16px">
+      <div>
+        <div class="stat-label" style="margin-bottom:6px">PATRIMONIO TOTAL</div>
+        <div class="stat-val yellow" style="font-size:30px">${fmt(totalARS)}</div>
+        ${totalUSD!==null?`<div style="font-family:var(--mono);font-size:12px;color:var(--text3);margin-top:4px">≈ ${fmtUSD(totalUSD)} USD</div>`:'<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px">cargá cotizaciones para ver en USD</div>'}
+      </div>
+      <!-- Desglose horizontal -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="padding-right:16px;border-right:1px solid var(--border)">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.8px;margin-bottom:5px">EN ARS</div>
+          <div style="font-family:var(--mono);font-size:15px;font-weight:500;color:var(--text)">${fmt(subTotalARS)}</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">pesos argentinos</div>
+        </div>
+        <div style="padding:0 16px;border-right:1px solid var(--border)">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.8px;margin-bottom:5px">EN USD</div>
+          <div style="font-family:var(--mono);font-size:15px;font-weight:500;color:var(--blue)">${hasCotiz&&subTotalUSD>0?fmtUSD(subTotalUSD):'—'}</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">${hasCotiz&&subTotalUSD>0?fmt(subTotalUSD*usd)+' ARS':'sin cotización'}</div>
+        </div>
+        <div style="padding-left:16px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.8px;margin-bottom:5px">EN CRIPTO (USDT)</div>
+          <div style="font-family:var(--mono);font-size:15px;font-weight:500;color:var(--green)">${subTotalCryptoUSDT>0?fmtUSD(subTotalCryptoUSDT)+' USDT':'—'}</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">${subTotalCryptoUSDT>0&&usd&&usdt?fmt(subTotalCryptoUSDT*usdt*usd)+' ARS':'sin cotización'}</div>
+        </div>
+      </div>
     </div>
+
     <div class="assets-grid">
       <div class="card">
         <div class="section-title">MIS BILLETERAS</div>
         <div style="display:flex;flex-direction:column;gap:8px">
           ${state.wallets.length ? state.wallets.map((w,i)=>{
-            const color=PALETTE[i%PALETTE.length];
-            const pct=totalActivos>0?(Number(w.saldo)/totalActivos*100):0;
+            const color = w.color || PALETTE[i%PALETTE.length];
+            const arsVal=walletValueARS(w);
+            const displayARS=arsVal!==null?arsVal:Number(w.saldo||0);
+            const pct=totalARS>0?(displayARS/totalARS*100):0;
+            const isVirtual = ['virtual','cripto','inversión'].includes(w.tipo);
+            const isForeign = w.moneda!=='ARS';
             return `
               <div class="wallet">
                 <div class="wallet-left">
                   <div style="width:8px;height:8px;border-radius:2px;background:${color};flex-shrink:0"></div>
                   <div>
                     <div style="font-family:var(--mono);font-size:13px;font-weight:500">${esc(w.nombre)}</div>
-                    <div style="display:flex;gap:5px;margin-top:3px">
+                    <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">
                       <span class="badge badge-gray">${esc(w.tipo.toUpperCase())}</span>
                       <span class="badge badge-gray">${esc(w.moneda)}</span>
+                      ${isVirtual && w.rendAnual ? `<span class="badge badge-green">${fmtPct(w.rendAnual)} TNA</span>` : ''}
                     </div>
                   </div>
                 </div>
-                <div class="wallet-actions">
-                  <span class="wallet-amount" style="color:${color}">${fmt(w.saldo)}</span>
-                  <button class="btn-danger" data-del-wallet="${w.id}">✕</button>
+                <div class="wallet-actions" style="flex-direction:column;align-items:flex-end;gap:2px">
+                  ${w.moneda!=='ARS'
+                    ? `<span class="wallet-amount">${Number(w.saldo||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:8})} ${esc(w.moneda)}</span>
+                       <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">
+                         ${arsVal!==null ? `≈ ${fmt(arsVal)} ARS` : `<span style="color:var(--text3)">sin cotización</span>`}
+                       </span>`
+                    : `<span class="wallet-amount">${fmt(w.saldo)}</span>`
+                  }
+                  <div style="display:flex;gap:6px;margin-top:3px">
+                    <button class="btn-ghost" style="font-size:10px;padding:3px 7px" data-edit-wallet="${w.id}">EDITAR</button>
+                    <button class="btn-danger" data-del-wallet="${w.id}">✕</button>
+                  </div>
                 </div>
               </div>
-              ${totalActivos>0?`
+              ${isVirtual && w.rendAnual ? `
+                <div style="margin:-4px 0 4px 16px;padding:6px 10px;background:var(--bg);border-radius:4px;border:1px solid var(--border)">
+                  <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">
+                    REND. DIARIO: <span style="color:var(--green)">+${fmt(Number(w.saldo||0) * (Number(w.rendAnual)/100) / 365)}</span>
+                    <span style="margin-left:8px">MENSUAL: <span style="color:var(--green)">+${fmt(Number(w.saldo||0) * (Number(w.rendAnual)/100) / 12)}</span></span>
+                  </div>
+                </div>` : ''}
+              ${totalARS>0?`
                 <div style="margin:-2px 0 4px 0;padding:0 2px">
                   <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:3px">
                     <span>${esc(w.nombre)}</span><span style="color:${color}">${pct.toFixed(1)}%</span>
@@ -637,22 +861,142 @@ function renderActivos(){
                 <option>ARS</option><option>USD</option><option>EUR</option><option>USDT</option><option>BTC</option>
               </select>
             </div>
+            <div>
+              <label class="label">Color (billeteras virtuales)</label>
+              <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+                <input id="walletColor" type="color" value="#f0b90b" style="width:36px;height:32px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;padding:2px">
+                <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">Seleccioná el color del ícono</span>
+              </div>
+            </div>
+            <div>
+              <label class="label">Rendimiento anual % <span style="color:var(--text3)">(opcional — se aplica diario)</span></label>
+              <input id="walletRend" class="field" type="number" placeholder="Ej: 60 para 60% TNA" step="0.01" min="0">
+            </div>
             <button id="addWallet" class="btn btn-accent" style="width:100%">AGREGAR BILLETERA</button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Cotizaciones del día -->
+    <div class="card" style="margin-top:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="section-title" style="margin:0">COTIZACIONES</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${state.quotes.lastFetch?`<span style="font-family:var(--mono);font-size:9px;color:var(--text3)">act. ${new Date(state.quotes.lastFetch).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}</span>`:''}
+          <button id="toggleQuoteForm" class="btn btn-ghost" style="padding:4px 10px;font-size:11px">+ CARGAR</button>
+        </div>
+      </div>
+      <div id="quoteFormWrap" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-bottom:8px">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);width:56px;letter-spacing:.5px">USD blue</span>
+          <input id="qiUsd" class="field" type="number" placeholder="${state.quotes.usd||'Ej: 1400'}" step="1">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">ARS</span>
+        </div>
+        <div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-bottom:8px">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);width:56px;letter-spacing:.5px">USDT</span>
+          <input id="qiUsdt" class="field" type="number" placeholder="${state.quotes.usdt||'Ej: 0.9998'}" step="0.0001">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">USD</span>
+        </div>
+        <div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-bottom:12px">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);width:56px;letter-spacing:.5px">BTC</span>
+          <input id="qiBtc" class="field" type="number" placeholder="${state.quotes.btc||'Ej: 83000'}" step="1">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">USD</span>
+        </div>
+        <button id="qiSave" class="btn btn-accent" style="width:100%">GUARDAR</button>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 2fr 2fr 2fr;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;padding:0 8px 8px;border-bottom:1px solid var(--border)">
+        <span>PAR</span><span style="text-align:right">PRECIO (ARS)</span><span style="text-align:right">PRECIO (USD)</span><span style="text-align:right">ESTADO</span>
+      </div>
+      ${[
+        {par:'USD / ARS', arsVal:state.quotes.usd, usdVal:1, ok:!!state.quotes.usd},
+        {par:'USDT / ARS', arsVal:state.quotes.usdt&&state.quotes.usd?state.quotes.usdt*state.quotes.usd:null, usdVal:state.quotes.usdt, ok:!!(state.quotes.usdt&&state.quotes.usd)},
+        {par:'BTC / ARS', arsVal:state.quotes.btc&&state.quotes.usd?state.quotes.btc*state.quotes.usd:null, usdVal:state.quotes.btc, ok:!!(state.quotes.btc&&state.quotes.usd)},
+      ].map(r=>`
+        <div style="display:grid;grid-template-columns:2fr 2fr 2fr 2fr;font-family:var(--mono);font-size:12px;align-items:center;padding:12px 8px;border-bottom:1px solid var(--border)">
+          <span style="font-weight:500;color:var(--text)">${r.par}</span>
+          <span style="text-align:right;color:${r.ok?'var(--text)':'var(--text3)'}">
+            ${r.arsVal?'$'+Number(r.arsVal).toLocaleString('es-AR',{maximumFractionDigits:r.arsVal<10?4:0}):'—'}
+          </span>
+          <span style="text-align:right;color:var(--text2)">
+            ${r.usdVal?'$'+Number(r.usdVal).toLocaleString('en-US',{maximumFractionDigits:r.usdVal<10?4:0}):'—'}
+          </span>
+          <span style="text-align:right">
+            <span class="badge ${r.ok?'badge-green':'badge-gray'}">${r.ok?'OK':'SIN DATOS'}</span>
+          </span>
+        </div>`).join('')}
+    </div>
   `;
+  document.getElementById('toggleQuoteForm').onclick=()=>{
+    const wrap=document.getElementById('quoteFormWrap');
+    const btn=document.getElementById('toggleQuoteForm');
+    const open=wrap.style.display==='none';
+    wrap.style.display=open?'block':'none';
+    btn.textContent=open?'✕ CERRAR':'+ CARGAR';
+  };
+  document.getElementById('qiSave').onclick=()=>{
+    const u=Number(document.getElementById('qiUsd').value);
+    const ut=Number(document.getElementById('qiUsdt').value);
+    const b=Number(document.getElementById('qiBtc').value);
+    if(u>0) state.quotes.usd=u;
+    if(ut>0) state.quotes.usdt=ut;
+    if(b>0) state.quotes.btc=b;
+    state.quotes.lastFetch=Date.now();
+    save('ct_quotes',state.quotes);
+    renderActivos();
+    updateSidebar();
+    showToast('Cotizaciones actualizadas');
+  };
   document.getElementById('addWallet').onclick=()=>{
     const nombre=document.getElementById('walletNombre').value.trim();
     const tipo=document.getElementById('walletTipo').value;
     const saldo=Number(document.getElementById('walletSaldo').value||0);
     const moneda=document.getElementById('walletMoneda').value;
+    const color=document.getElementById('walletColor').value||'#f0b90b';
+    const rendAnual=Number(document.getElementById('walletRend').value||0);
     if(!nombre) return;
-    state.wallets.push({id:Date.now(),nombre,tipo,saldo,moneda});
+    state.wallets.push({id:Date.now(),nombre,tipo,saldo,moneda,color,rendAnual:rendAnual||null});
     save('ct_wallets',state.wallets);
     render();
   };
+  root.querySelectorAll('[data-edit-wallet]').forEach(btn=>btn.onclick=()=>{
+    const id=Number(btn.dataset.editWallet);
+    const w=state.wallets.find(x=>x.id===id);
+    if(!w) return;
+    const modal=document.createElement('div');
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px';
+    modal.innerHTML=`
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;min-width:300px;max-width:400px;width:100%">
+        <div style="font-family:var(--mono);font-size:13px;font-weight:500;margin-bottom:16px;color:var(--text)">EDITAR — ${esc(w.nombre)}</div>
+        <div class="form-stack">
+          <div><label class="label">Saldo actual</label><input id="editSaldo" class="field" type="number" value="${w.saldo}" step="0.01"></div>
+          <div>
+            <label class="label">Color</label>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+              <input id="editColor" type="color" value="${w.color||'#f0b90b'}" style="width:36px;height:32px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;padding:2px">
+            </div>
+          </div>
+          <div><label class="label">Rendimiento anual % TNA</label><input id="editRend" class="field" type="number" value="${w.rendAnual||''}" placeholder="0 = sin rendimiento" step="0.01"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button id="editSave" class="btn btn-accent" style="flex:1">GUARDAR</button>
+          <button id="editCancel" class="btn btn-ghost">CANCELAR</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#editCancel').onclick=()=>modal.remove();
+    modal.querySelector('#editSave').onclick=()=>{
+      w.saldo=Number(modal.querySelector('#editSaldo').value||w.saldo);
+      w.color=modal.querySelector('#editColor').value;
+      const rend=Number(modal.querySelector('#editRend').value);
+      w.rendAnual=rend>0?rend:null;
+      save('ct_wallets',state.wallets);
+      modal.remove();
+      render();
+      showToast(`${w.nombre} actualizado`);
+    };
+    modal.onclick=e=>{if(e.target===modal) modal.remove();};
+  });
   root.querySelectorAll('[data-del-wallet]').forEach(btn=>btn.onclick=()=>{
     state.wallets=state.wallets.filter(w=>String(w.id)!==btn.dataset.delWallet);
     save('ct_wallets',state.wallets);
@@ -697,6 +1041,13 @@ function renderInversiones(){
               <input id="invTna" class="field" type="number" placeholder="Ej: 75" step="0.01">
             </div>
             <div><label class="label">Capital inicial</label><input id="invCapital" class="field" type="number" placeholder="0.00"></div>
+            <div>
+              <label class="label">Tipo de interés</label>
+              <div class="seg" style="margin-bottom:0">
+                <button id="inv-compuesto" class="seg-btn active">COMPUESTO</button>
+                <button id="inv-simple" class="seg-btn">SIMPLE</button>
+              </div>
+            </div>
             <div><label class="label">Moneda</label>
               <select id="invMoneda" class="field">
                 <option>ARS</option><option>USD</option><option>USDT</option><option>EUR</option>
@@ -713,9 +1064,12 @@ function renderInversiones(){
             ${state.invest.length ? state.invest.map((inv,i)=>{
               const color=PALETTE[i%PALETTE.length];
               const cap=Number(inv.capital||0);
-              const r3=proyectar(cap,Number(inv.tna),3)-cap;
-              const r6=proyectar(cap,Number(inv.tna),6)-cap;
-              const r12=proyectar(cap,Number(inv.tna),12)-cap;
+              const cmp = inv.compuesto !== false; // default true
+              const r3=proyectar(cap,Number(inv.tna),3,cmp)-cap;
+              const r6=proyectar(cap,Number(inv.tna),6,cmp)-cap;
+              const r12=proyectar(cap,Number(inv.tna),12,cmp)-cap;
+              // Also calculate simple for comparison if compound
+              const r12s = cmp ? proyectar(cap,Number(inv.tna),12,false)-cap : null;
               const tipos={'plazo_fijo':'PF','fci':'FCI','accion':'ACC','cripto':'CRIPTO','cedear':'CEDEAR','otro':'OTRO'};
               return `
                 <div class="invest-card">
@@ -724,9 +1078,10 @@ function renderInversiones(){
                       <div style="width:8px;height:8px;border-radius:2px;background:${color}"></div>
                       <div>
                         <div class="invest-name">${esc(inv.nombre)}</div>
-                        <div style="display:flex;gap:4px;margin-top:3px">
+                        <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">
                           <span class="badge badge-gray">${tipos[inv.tipo]||inv.tipo.toUpperCase()}</span>
                           <span class="badge badge-gray">${esc(inv.moneda)}</span>
+                          <span class="badge ${cmp?'badge-yellow':'badge-blue'}">${cmp?'COMPUESTO':'SIMPLE'}</span>
                         </div>
                       </div>
                     </div>
@@ -736,15 +1091,32 @@ function renderInversiones(){
                     </div>
                   </div>
                   <div style="background:var(--bg);border-radius:6px;padding:10px;border:1px solid var(--border)">
-                    <div class="invest-meta" style="margin-bottom:6px">RENDIMIENTO PROYECTADO</div>
-                    <div class="projected-row"><span style="color:var(--text2)">3 meses</span><span class="amount-positive">+${fmt(r3)}</span></div>
-                    <div class="projected-row"><span style="color:var(--text2)">6 meses</span><span class="amount-positive">+${fmt(r6)}</span></div>
-                    <div class="projected-row"><span style="color:var(--text2)">12 meses</span><span class="amount-positive">+${fmt(r12)}</span><span style="font-family:var(--mono);font-size:10px;color:var(--accent)">${fmtPct((r12/Math.max(cap,1))*100)} rend.</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                      <div class="invest-meta">RENDIMIENTO PROYECTADO</div>
+                      <div class="invest-meta" style="color:${cmp?'var(--accent)':'var(--blue)'}">INT. ${cmp?'COMPUESTO':'SIMPLE'}</div>
+                    </div>
+                    <div class="projected-row"><span style="color:var(--text2)">3 meses</span><div style="text-align:right"><div class="amount-positive">+${fmt(r3)}</div><div style="font-family:var(--mono);font-size:10px;color:var(--text3)">total ${fmt(cap+r3)}</div></div></div>
+                    <div class="projected-row"><span style="color:var(--text2)">6 meses</span><div style="text-align:right"><div class="amount-positive">+${fmt(r6)}</div><div style="font-family:var(--mono);font-size:10px;color:var(--text3)">total ${fmt(cap+r6)}</div></div></div>
+                    <div class="projected-row">
+                      <span style="color:var(--text2)">12 meses</span>
+                      <div style="text-align:right">
+                        <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+                          <span class="amount-positive">+${fmt(r12)}</span>
+                          <span style="font-family:var(--mono);font-size:10px;color:var(--accent)">${fmtPct((r12/Math.max(cap,1))*100)}</span>
+                        </div>
+                        <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">total ${fmt(cap+r12)}</div>
+                      </div>
+                    </div>
+                    ${cmp && cap > 0 ? `
+                    <div class="projected-row" style="border-top:1px dashed var(--border);margin-top:4px;padding-top:8px">
+                      <span style="color:var(--text3);font-size:10px">vs. interés simple 12m</span>
+                      <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">+${fmt(r12s)} <span style="color:var(--green);font-size:10px">(+${fmt(r12-r12s)} extra)</span></span>
+                    </div>` : ''}
                   </div>
-                  <div style="margin-top:8px;display:flex;gap:8px;align-items:center;justify-content:space-between">
-                    <div>
-                      <label class="label" style="display:inline;margin-right:6px">Ajustar capital:</label>
-                      <input class="field" style="width:120px;display:inline-block" type="number" placeholder="Nuevo capital" data-inv-cap="${inv.id}">
+                  <div style="margin-top:10px;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <label class="label" style="display:inline;margin:0">Ajustar capital:</label>
+                      <input class="field" style="width:110px" type="number" placeholder="Nuevo capital" data-inv-cap="${inv.id}">
                     </div>
                     <button class="btn-danger" data-del-inv="${inv.id}">ELIMINAR</button>
                   </div>
@@ -759,6 +1131,13 @@ function renderInversiones(){
           <div class="form-stack">
             <div><label class="label">Capital a simular</label><input id="simCap" class="field" type="number" placeholder="100000"></div>
             <div><label class="label">TNA %</label><input id="simTna" class="field" type="number" placeholder="75"></div>
+            <div>
+              <label class="label">Tipo de interés</label>
+              <div class="seg" style="margin-bottom:0">
+                <button id="sim-compuesto" class="seg-btn active">COMPUESTO</button>
+                <button id="sim-simple" class="seg-btn">SIMPLE</button>
+              </div>
+            </div>
             <button id="simBtn" class="btn btn-ghost" style="width:100%">CALCULAR</button>
           </div>
           <div id="simResult" style="margin-top:12px"></div>
@@ -767,6 +1146,11 @@ function renderInversiones(){
     </div>
   `;
 
+  // Toggle interés compuesto / simple
+  let invCompuesto = true;
+  document.getElementById('inv-compuesto').onclick=()=>{ invCompuesto=true; document.getElementById('inv-compuesto').classList.add('active'); document.getElementById('inv-simple').classList.remove('active'); };
+  document.getElementById('inv-simple').onclick=()=>{ invCompuesto=false; document.getElementById('inv-simple').classList.add('active'); document.getElementById('inv-compuesto').classList.remove('active'); };
+
   document.getElementById('addInvest').onclick=()=>{
     const nombre=document.getElementById('invNombre').value.trim();
     const tipo=document.getElementById('invTipo').value;
@@ -774,7 +1158,7 @@ function renderInversiones(){
     const capital=Number(document.getElementById('invCapital').value||0);
     const moneda=document.getElementById('invMoneda').value;
     if(!nombre||!tna) return;
-    state.invest.push({id:Date.now(),nombre,tipo,tna,capital,moneda});
+    state.invest.push({id:Date.now(),nombre,tipo,tna,capital,moneda,compuesto:invCompuesto});
     save('ct_invest',state.invest);
     render();
   };
@@ -793,24 +1177,82 @@ function renderInversiones(){
     if(inv){inv.capital=val;save('ct_invest',state.invest);renderInversiones();}
   });
 
+  let simCompuesto = true;
+  document.getElementById('sim-compuesto').onclick=()=>{ simCompuesto=true; document.getElementById('sim-compuesto').classList.add('active'); document.getElementById('sim-simple').classList.remove('active'); };
+  document.getElementById('sim-simple').onclick=()=>{ simCompuesto=false; document.getElementById('sim-simple').classList.add('active'); document.getElementById('sim-compuesto').classList.remove('active'); };
+
   document.getElementById('simBtn').onclick=()=>{
     const cap=Number(document.getElementById('simCap').value);
     const tna=Number(document.getElementById('simTna').value);
     if(!cap||!tna){document.getElementById('simResult').innerHTML='';return;}
-    const r3=proyectar(cap,tna,3)-cap;
-    const r6=proyectar(cap,tna,6)-cap;
-    const r12=proyectar(cap,tna,12)-cap;
-    const r24=proyectar(cap,tna,24)-cap;
+    const r3=proyectar(cap,tna,3,simCompuesto)-cap;
+    const r6=proyectar(cap,tna,6,simCompuesto)-cap;
+    const r12=proyectar(cap,tna,12,simCompuesto)-cap;
+    const r24=proyectar(cap,tna,24,simCompuesto)-cap;
+    const r12alt=proyectar(cap,tna,12,!simCompuesto)-cap;
+    const fmtRow=(meses,gan)=>`
+      <div class="projected-row">
+        <span style="color:var(--text2)">${meses} meses</span>
+        <div style="text-align:right">
+          <div class="amount-positive">+${fmt(gan)}</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">total ${fmt(cap+gan)}</div>
+        </div>
+      </div>`;
     document.getElementById('simResult').innerHTML=`
       <div style="background:var(--bg);border-radius:6px;border:1px solid var(--border);padding:10px">
-        <div class="invest-meta" style="margin-bottom:8px">CAPITAL: ${fmt(cap)} · TNA: ${fmtPct(tna)}</div>
-        <div class="projected-row"><span style="color:var(--text2)">3 meses</span><span class="amount-positive">+${fmt(r3)}</span></div>
-        <div class="projected-row"><span style="color:var(--text2)">6 meses</span><span class="amount-positive">+${fmt(r6)}</span></div>
-        <div class="projected-row"><span style="color:var(--text2)">12 meses</span><span class="amount-positive">+${fmt(r12)}</span></div>
-        <div class="projected-row"><span style="color:var(--text2)">24 meses</span><span class="amount-positive">+${fmt(r24)}</span></div>
+        <div class="invest-meta" style="margin-bottom:8px">CAPITAL: ${fmt(cap)} · ${fmtPct(tna)} TNA · INT. ${simCompuesto?'COMPUESTO DIARIO':'SIMPLE'}</div>
+        ${fmtRow(3,r3)}${fmtRow(6,r6)}${fmtRow(12,r12)}${fmtRow(24,r24)}
+        <div class="projected-row" style="border-top:1px dashed var(--border);margin-top:4px;padding-top:8px">
+          <span style="color:var(--text3);font-size:10px">vs. ${simCompuesto?'simple':'compuesto'} a 12m</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">+${fmt(r12alt)} <span style="color:${simCompuesto?'var(--green)':'var(--red)'};font-size:10px">(${simCompuesto?'+':'−'}${fmt(Math.abs(r12-r12alt))})</span></span>
+        </div>
       </div>
     `;
   };
+}
+
+// ─── APPLY DAILY YIELDS ───
+function applyDailyYields(){
+  const today = todayStr();
+  let changed = false;
+  state.wallets.forEach(w => {
+    if(!w.rendAnual || Number(w.rendAnual) <= 0) return;
+    if(w.lastYieldDate === today) return; // already done today
+    // Count days since last applied
+    const from = w.lastYieldDate ? new Date(w.lastYieldDate) : null;
+    const toDate = new Date(today);
+    if(!from || from >= toDate) { w.lastYieldDate = today; changed = true; return; }
+    // Calculate days elapsed
+    const msPerDay = 86400000;
+    const days = Math.floor((toDate - from) / msPerDay);
+    if(days <= 0) return;
+    const dailyRate = Number(w.rendAnual) / 100 / 365;
+    for(let d=0; d<days; d++){
+      const dayDate = new Date(from.getTime() + (d+1)*msPerDay);
+      const dateStr = dayDate.toISOString().split('T')[0];
+      const rendMonto = Number(w.saldo||0) * dailyRate;
+      if(rendMonto <= 0) continue;
+      const txn = {
+        id: Date.now() + d,
+        tipo: 'ingreso',
+        categoria: 'Rendimiento',
+        monto: rendMonto,
+        descripcion: `Rend. diario ${esc(w.nombre)} (${fmtPct(w.rendAnual)} TNA)`,
+        fecha: dateStr,
+        walletId: w.id,
+        esRendimiento: true,
+        walletNombre: w.nombre
+      };
+      state.txns.unshift(txn);
+      w.saldo = Number(w.saldo||0) + rendMonto;
+    }
+    w.lastYieldDate = today;
+    changed = true;
+  });
+  if(changed){
+    save('ct_txns', state.txns);
+    save('ct_wallets', state.wallets);
+  }
 }
 
 // ─── MAIN RENDER ───
@@ -826,7 +1268,18 @@ function render(){
   renderInversiones();
 }
 
-document.getElementById('sidebarCollapse').onclick=()=>{state.sidebarOpen=!state.sidebarOpen;renderSidebarShell();};
+document.getElementById('sidebarCollapse').onclick=()=>{state.sidebarOpen=!state.sidebarOpen;renderSidebarShell()};
+
+// Migrar inversiones viejas sin campo compuesto
+let migrated=false;
+state.invest.forEach(i=>{ if(i.compuesto===undefined){ i.compuesto=true; migrated=true; } });
+if(migrated) save('ct_invest',state.invest);
+
+applyDailyYields();
+// Forzar recarga de cotizaciones con las nuevas APIs
+state.quotes.lastFetch = null;
+save('ct_quotes', state.quotes);
+fetchQuotes();
 render();
 </script>
 </body>

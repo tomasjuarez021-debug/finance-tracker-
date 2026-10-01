@@ -195,7 +195,7 @@
     .btn-green{background:var(--green);color:#0b0e11}.btn-green:hover{filter:brightness(1.1)}
 
     /* ─── ANILLO DE CATEGORÍAS ─── */
-    .cat-ico{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+    .cat-ico{color:#fff;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.35)}
     .cat-ico-add{background:var(--surface2);color:var(--text2);border:1px dashed var(--border2)}
     .ring-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px 4px;align-items:center}
     .ring-slot{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:var(--text);padding:4px 0;border-radius:10px;transition:.12s;min-width:0}
@@ -246,7 +246,7 @@
     .cat-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow:auto}
     .cat-list-row{display:flex;align-items:center;gap:10px;font-size:13px}
     .emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
-    .emoji-btn{background:var(--surface2);border:2px solid transparent;border-radius:8px;font-size:18px;padding:4px 0}
+    .emoji-btn{background:var(--surface2);border:2px solid transparent;border-radius:8px;padding:6px 0;color:var(--text);display:flex;align-items:center;justify-content:center}
     .emoji-btn.sel{border-color:var(--accent)}
     .color-grid{display:flex;flex-wrap:wrap;gap:8px}
     .color-btn{width:28px;height:28px;border-radius:50%;border:3px solid transparent}
@@ -330,32 +330,86 @@
 <script>
 // ─── CONSTANTS ───
 const CAT_COLORS = ["#f0b90b","#f6465d","#0ecb81","#ff8a3d","#3b82f6","#ec4899","#14b8a6","#9b6dff","#00c2ff","#a0673c","#d4a017","#e11d48","#16a34a","#64748b"];
-const CAT_EMOJIS = ["🍽️","🎬","🚌","🛒","💊","🛍️","👨‍👩‍👧","🏦","🎁","🏠","💡","🎓","🐱","🐶","🚗","⛽","☕","🍺","✈️","🎮","📱","💪","👕","💇","🧾","💳","📦","💼","💻","📈","💹","⭐","💰","🎵","⚽","🏥","🍔","🍕","🧸","🔧"];
+const ICONS = {
+  utensils:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+  film:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>',
+  bus:'<path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/>',
+  cart:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+  health:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',
+  bag:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  family:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  bank:'<path d="M3 22h18"/><path d="M6 18v-7"/><path d="M10 18v-7"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M12 2 20 7H4z"/>',
+  gift:'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/>',
+  home:'<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+  bulb:'<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
+  school:'<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>',
+  cat:'<path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3-9-7.56c0-1.25.5-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.72.23 6.5 2.23A9.04 9.04 0 0 1 12 5Z"/><path d="M8 14v.5"/><path d="M16 14v.5"/><path d="M11.25 16.25h1.5L12 17l-.75-.75Z"/>',
+  paw:'<circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"/>',
+  car:'<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
+  fuel:'<path d="M3 22h12"/><path d="M4 9h10"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/>',
+  coffee:'<path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2"/><path d="M10 2v2"/><path d="M14 2v2"/>',
+  beer:'<path d="M17 11h1a3 3 0 0 1 0 6h-1"/><path d="M9 12v6"/><path d="M13 12v6"/><path d="M14 7.5c-1 0-1.44.5-3 .5s-2-.5-3-.5-1.72.5-2.5.5a2.5 2.5 0 0 1 0-5c.78 0 1.57.5 2.5.5S9.44 2 11 2s2 1.5 3 1.5 1.72-.5 2.5-.5a2.5 2.5 0 0 1 0 5c-.78 0-1.5-.5-2.5-.5Z"/><path d="M5 8v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"/>',
+  plane:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+  game:'<line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect width="20" height="12" x="2" y="6" rx="2"/>',
+  phone:'<rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/>',
+  gym:'<path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/>',
+  shirt:'<path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>',
+  scissors:'<circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/>',
+  receipt:'<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
+  card:'<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
+  box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+  briefcase:'<rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+  laptop:'<rect width="18" height="12" x="3" y="4" rx="2"/><path d="M2 20h20"/>',
+  trend:'<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+  percent:'<line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  coins:'<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>',
+  wallet:'<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  ball:'<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  cross:'<path d="M11 2a2 2 0 0 0-2 2v5H4a2 2 0 0 0-2 2v2c0 1.1.9 2 2 2h5v5c0 1.1.9 2 2 2h2a2 2 0 0 0 2-2v-5h5a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-5V4a2 2 0 0 0-2-2h-2z"/>',
+  pizza:'<path d="M15 11h.01"/><path d="M11 15h.01"/><path d="M16 16h.01"/><path d="m2 16 20 6-6-20A20 20 0 0 0 2 16"/><path d="M5.71 17.11a17.04 17.04 0 0 1 11.4-11.42"/>',
+  baby:'<path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"/>',
+  wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  tag:'<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5"/>',
+  dots:'<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+  chevron:'<path d="m6 9 6 6 6-6"/>',
+  calendar:'<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+};
+const UI_ICONS = ['plus','chevron','calendar'];
+const CAT_ICON_KEYS = Object.keys(ICONS).filter(k=>!UI_ICONS.includes(k));
+// Compatibilidad: categorías guardadas con emoji
+const EMOJI_TO_ICON = {"🍽️":"utensils","🎬":"film","🚌":"bus","🛒":"cart","💊":"health","🛍️":"bag","👨‍👩‍👧":"family","🏦":"bank","🎁":"gift","🏠":"home","💡":"bulb","🎓":"school","🐱":"cat","🐶":"paw","🚗":"car","⛽":"fuel","☕":"coffee","🍺":"beer","✈️":"plane","🎮":"game","📱":"phone","💪":"gym","👕":"shirt","💇":"scissors","🧾":"receipt","💳":"card","📦":"box","💼":"briefcase","💻":"laptop","📈":"trend","💹":"percent","⭐":"star","💰":"coins","🎵":"music","⚽":"ball","🏥":"cross","🍔":"pizza","🍕":"pizza","🧸":"baby","🔧":"wrench"};
+function svgIcon(key, size){
+  const k = ICONS[key] ? key : (EMOJI_TO_ICON[key] || 'tag');
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]}</svg>`;
+}
 const DEFAULT_CATS = [
-  {tipo:"gasto",nombre:"Restaurante",  icon:"🍽️", color:"#3b82f6"},
-  {tipo:"gasto",nombre:"Ocio",         icon:"🎬", color:"#ec4899"},
-  {tipo:"gasto",nombre:"Transporte",   icon:"🚌", color:"#f0b90b"},
-  {tipo:"gasto",nombre:"Supermercado", icon:"🛒", color:"#14b8a6"},
-  {tipo:"gasto",nombre:"Salud",        icon:"💊", color:"#0ecb81"},
-  {tipo:"gasto",nombre:"Compras",      icon:"🛍️", color:"#00c2ff"},
-  {tipo:"gasto",nombre:"Familia",      icon:"👨‍👩‍👧", color:"#9b6dff"},
-  {tipo:"gasto",nombre:"Banco",        icon:"🏦", color:"#64748b"},
-  {tipo:"gasto",nombre:"Regalos",      icon:"🎁", color:"#f6465d"},
-  {tipo:"gasto",nombre:"Casa",         icon:"🏠", color:"#a0673c"},
-  {tipo:"gasto",nombre:"Servicios",    icon:"💡", color:"#ff8a3d"},
-  {tipo:"gasto",nombre:"Educación",    icon:"🎓", color:"#d4a017"},
-  {tipo:"gasto",nombre:"Otros",        icon:"📦", color:"#64748b"},
-  {tipo:"ingreso",nombre:"Salario",     icon:"💼", color:"#0ecb81"},
-  {tipo:"ingreso",nombre:"Freelance",   icon:"💻", color:"#f0b90b"},
-  {tipo:"ingreso",nombre:"Inversiones", icon:"📈", color:"#14b8a6"},
-  {tipo:"ingreso",nombre:"Rendimiento", icon:"💹", color:"#16a34a"},
-  {tipo:"ingreso",nombre:"Alquiler",    icon:"🏠", color:"#3b82f6"},
-  {tipo:"ingreso",nombre:"Regalo",      icon:"🎁", color:"#ec4899"},
-  {tipo:"ingreso",nombre:"Bono",        icon:"⭐", color:"#d4a017"},
-  {tipo:"ingreso",nombre:"Otros",       icon:"💰", color:"#64748b"},
+  {tipo:"gasto",nombre:"Restaurante",  icon:"utensils", color:"#3b82f6"},
+  {tipo:"gasto",nombre:"Ocio",         icon:"film", color:"#ec4899"},
+  {tipo:"gasto",nombre:"Transporte",   icon:"bus", color:"#f0b90b"},
+  {tipo:"gasto",nombre:"Supermercado", icon:"cart", color:"#14b8a6"},
+  {tipo:"gasto",nombre:"Salud",        icon:"health", color:"#0ecb81"},
+  {tipo:"gasto",nombre:"Compras",      icon:"bag", color:"#00c2ff"},
+  {tipo:"gasto",nombre:"Familia",      icon:"family", color:"#9b6dff"},
+  {tipo:"gasto",nombre:"Banco",        icon:"bank", color:"#64748b"},
+  {tipo:"gasto",nombre:"Regalos",      icon:"gift", color:"#f6465d"},
+  {tipo:"gasto",nombre:"Casa",         icon:"home", color:"#a0673c"},
+  {tipo:"gasto",nombre:"Servicios",    icon:"bulb", color:"#ff8a3d"},
+  {tipo:"gasto",nombre:"Educación",    icon:"school", color:"#d4a017"},
+  {tipo:"gasto",nombre:"Otros",        icon:"box", color:"#64748b"},
+  {tipo:"ingreso",nombre:"Salario",     icon:"briefcase", color:"#0ecb81"},
+  {tipo:"ingreso",nombre:"Freelance",   icon:"laptop", color:"#f0b90b"},
+  {tipo:"ingreso",nombre:"Inversiones", icon:"trend", color:"#14b8a6"},
+  {tipo:"ingreso",nombre:"Rendimiento", icon:"percent", color:"#16a34a"},
+  {tipo:"ingreso",nombre:"Alquiler",    icon:"home", color:"#3b82f6"},
+  {tipo:"ingreso",nombre:"Regalo",      icon:"gift", color:"#ec4899"},
+  {tipo:"ingreso",nombre:"Bono",        icon:"star", color:"#d4a017"},
+  {tipo:"ingreso",nombre:"Otros",       icon:"coins", color:"#64748b"},
 ];
 // Íconos para categorías viejas que ya no están en la lista por defecto
-const LEGACY_ICONS = {"Alimentación":"🍔","Vivienda":"🏠","Entretenimiento":"🎬","Ropa":"👕","Deuda":"💳"};
+const LEGACY_ICONS = {"Alimentación":"pizza","Vivienda":"home","Entretenimiento":"film","Ropa":"shirt","Deuda":"card"};
 const PALETTE = ["#f0b90b","#0ecb81","#4a9eff","#f6465d","#9b6dff","#00c2ff","#ff6b35","#14b8a6","#e879f9"];
 const TABS = [
   {id:"resumen",    label:"Resumen",     icon:"▣"},
@@ -653,11 +707,11 @@ function getCat(nombre, tipo){
   const c = state.cats.find(x=>x.nombre===nombre && x.tipo===tipo) || state.cats.find(x=>x.nombre===nombre);
   if(c) return c;
   let h=0; for(const ch of String(nombre)) h=(h*31+ch.charCodeAt(0))>>>0;
-  return {nombre, tipo, icon: LEGACY_ICONS[nombre]||'•', color: CAT_COLORS[h%CAT_COLORS.length]};
+  return {nombre, tipo, icon: LEGACY_ICONS[nombre]||'tag', color: CAT_COLORS[h%CAT_COLORS.length]};
 }
 function catsOf(tipo){ return state.cats.filter(c=>c.tipo===tipo); }
 function catIcon(cat, size=44){
-  return `<span class="cat-ico" style="width:${size}px;height:${size}px;font-size:${Math.round(size*.45)}px;background:${cat.color}">${esc(cat.icon)}</span>`;
+  return `<span class="cat-ico" style="width:${size}px;height:${size}px;background:${cat.color}">${svgIcon(cat.icon, Math.round(size*.5))}</span>`;
 }
 
 // Valor de un movimiento en ARS (null si no hay cotización para cripto)
@@ -731,7 +785,7 @@ function openTxnModal(catNombre, tipo){
 
 // ─── GESTIÓN DE CATEGORÍAS ───
 function openCatModal(tipo, onDone){
-  let icon=CAT_EMOJIS[0], color=CAT_COLORS[0];
+  let icon=CAT_ICON_KEYS[0], color=CAT_COLORS[0];
   const modal=openModal(`
     <div style="font-weight:600;font-size:15px;margin-bottom:14px">Categorías de ${tipo==='ingreso'?'ingresos':'gastos'}</div>
     <div class="cat-list" id="cmList"></div>
@@ -751,7 +805,7 @@ function openCatModal(tipo, onDone){
     </div>`);
   const draw=()=>{
     modal.querySelector('#cmPreview').innerHTML=catIcon({icon,color},40);
-    modal.querySelector('#cmEmojis').innerHTML=CAT_EMOJIS.map(e=>`<button class="emoji-btn ${e===icon?'sel':''}" data-e="${e}">${e}</button>`).join('');
+    modal.querySelector('#cmEmojis').innerHTML=CAT_ICON_KEYS.map(e=>`<button class="emoji-btn ${e===icon?'sel':''}" data-e="${e}">${svgIcon(e,20)}</button>`).join('');
     modal.querySelector('#cmColors').innerHTML=CAT_COLORS.map(c=>`<button class="color-btn ${c===color?'sel':''}" data-c="${c}" style="background:${c}"></button>`).join('');
     modal.querySelector('#cmList').innerHTML=catsOf(tipo).map(c=>`
       <div class="cat-list-row">${catIcon(c,30)}<span style="flex:1">${esc(c.nombre)}</span><button class="btn-danger" data-delcat="${esc(c.nombre)}">✕</button></div>`).join('') || `<div class="empty">SIN CATEGORÍAS</div>`;
@@ -785,7 +839,7 @@ function openAllCatsModal(tipo){
     <div style="font-weight:600;font-size:15px;margin-bottom:14px">${tipo==='ingreso'?'Ingresos':'Gastos'} — elegí una categoría</div>
     <div class="cat-pick-grid">
       ${catsOf(tipo).map(c=>`<button class="cat-pick" data-pick="${esc(c.nombre)}">${catIcon(c,44)}<span>${esc(c.nombre)}</span></button>`).join('')}
-      <button class="cat-pick" id="amNew"><span class="cat-ico cat-ico-add" style="width:44px;height:44px;font-size:22px">+</span><span>Nueva</span></button>
+      <button class="cat-pick" id="amNew"><span class="cat-ico cat-ico-add" style="width:44px;height:44px">${svgIcon('plus',22)}</span><span>Nueva</span></button>
     </div>`);
   modal.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{modal.remove();openTxnModal(b.dataset.pick,tipo);});
   modal.querySelector('#amNew').onclick=()=>{modal.remove();openCatModal(tipo);};
@@ -846,7 +900,7 @@ function renderResumen(){
     </button>`;
   }).join('') + `<button class="ring-slot" style="grid-row:4;grid-column:4" id="ringMore">
       <span class="ring-name">Más</span>
-      <span class="cat-ico cat-ico-add" style="width:46px;height:46px;font-size:20px">⌄</span>
+      <span class="cat-ico cat-ico-add" style="width:46px;height:46px">${svgIcon('chevron',22)}</span>
       <span class="ring-amt" style="color:var(--text3)">${cats.length>11?`+${cats.length-11}`:'+ nueva'}</span>
     </button>`;
 
@@ -888,7 +942,7 @@ function renderResumen(){
       </div>
       <div class="month-nav">
         <button id="prevMonth">‹</button>
-        <span>📅 ${monthLabel.toUpperCase()}</span>
+        <span style="display:inline-flex;align-items:center;gap:8px">${svgIcon('calendar',18)} ${monthLabel.toUpperCase()}</span>
         <button id="nextMonth">›</button>
       </div>
     </div>
@@ -1020,7 +1074,7 @@ function renderMovimientos(){
   const formCats=catsOf(state.formTipo);
   if(!formCats.some(c=>c.nombre===state.formCat)) state.formCat=formCats[0]?.nombre||'Otros';
   const catPicker=formCats.map(c=>`<button class="cat-pick ${state.formCat===c.nombre?'sel':''}" data-fcat="${esc(c.nombre)}">${catIcon(c,38)}<span>${esc(c.nombre)}</span></button>`).join('')
-    + `<button class="cat-pick" id="fcatNew"><span class="cat-ico cat-ico-add" style="width:38px;height:38px;font-size:18px">+</span><span>Nueva</span></button>`;
+    + `<button class="cat-pick" id="fcatNew"><span class="cat-ico cat-ico-add" style="width:38px;height:38px">${svgIcon('plus',18)}</span><span>Nueva</span></button>`;
   const walletPills = state.wallets.map(w=>`
     <button class="wallet-pill ${state.formWallet===w.id?'selected':''}" data-wpill="${w.id}">${esc(w.nombre)} <span style="color:var(--text3)">(${fmt(w.saldo)})</span></button>
   `).join('');

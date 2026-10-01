@@ -16,7 +16,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0b0e11;
@@ -32,11 +32,11 @@
       --green: #0ecb81;
       --red: #f6465d;
       --blue: #4a9eff;
-      --mono: 'IBM Plex Mono', monospace;
-      --sans: 'IBM Plex Sans', sans-serif;
+      --mono: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --sans: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:var(--sans);background:var(--bg);color:var(--text);font-weight:400;font-size:14px}
+    body{font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;font-family:var(--sans);background:var(--bg);color:var(--text);font-weight:400;font-size:14px}
     button,input,select{font-family:inherit}
     button{cursor:pointer}
     ::-webkit-scrollbar{width:4px;height:4px}
@@ -252,6 +252,19 @@
     .color-btn{width:28px;height:28px;border-radius:50%;border:3px solid transparent}
     .color-btn.sel{border-color:#fff}
 
+
+    /* ─── TIPOGRAFÍA ESTILO APP ─── */
+    .page-title{font-size:20px;font-weight:500;letter-spacing:0}
+    .section-title{font-size:15px;font-weight:500;color:var(--text);text-transform:none;letter-spacing:0}
+    .stat-label,.label,.wallet-tag,.invest-meta,.side-card .k{text-transform:none;letter-spacing:0;font-size:12px;color:var(--text2)}
+    .badge{letter-spacing:0;font-size:11px;text-transform:none;border-radius:10px}
+    .btn,.seg-btn,.tab-btn,.bottom-nav-btn,.wallet-pill,.empty,.ticker{letter-spacing:0}
+    .seg-btn{font-size:13px;font-weight:500}
+    .btn{font-weight:500;font-size:14px;border-radius:8px}
+    .empty{font-size:13px}
+    .brand,.mobile-brand{letter-spacing:0;font-weight:700}
+    .month-nav{font-weight:500;letter-spacing:.3px}
+    .hero-acc-val{font-weight:500;font-size:28px}
     /* ─── MOBILE HEADER ─── */
     .mobile-header{display:none}
     .bottom-nav{display:none}
@@ -687,7 +700,7 @@ function openTxnModal(catNombre, tipo){
       ${catIcon(cat,44)}
       <div>
         <div style="font-weight:600;font-size:15px">${esc(cat.nombre)}</div>
-        <div class="badge ${tipo==='ingreso'?'badge-green':'badge-red'}" style="margin-top:4px">${tipo==='ingreso'?'INGRESO':'GASTO'}</div>
+        <div class="badge ${tipo==='ingreso'?'badge-green':'badge-red'}" style="margin-top:4px">${tipo==='ingreso'?'Ingreso':'Gasto'}</div>
       </div>
     </div>
     <div class="form-stack">
@@ -723,7 +736,7 @@ function openCatModal(tipo, onDone){
     <div style="font-weight:600;font-size:15px;margin-bottom:14px">Categorías de ${tipo==='ingreso'?'ingresos':'gastos'}</div>
     <div class="cat-list" id="cmList"></div>
     <div class="divider"></div>
-    <div class="section-title" style="margin-bottom:8px">NUEVA CATEGORÍA</div>
+    <div class="section-title" style="margin-bottom:8px">Nueva categoría</div>
     <div class="form-stack">
       <div style="display:flex;gap:10px;align-items:center">
         <span id="cmPreview"></span>
@@ -883,8 +896,8 @@ function renderResumen(){
     <div class="cards-2 resumen-grid">
       <div class="card ring-card">
         <div class="seg" style="margin-bottom:12px">
-          <button class="seg-btn ${tipo==='gasto'?'active seg-red':''}" data-vt="gasto">↓ GASTOS</button>
-          <button class="seg-btn ${tipo==='ingreso'?'active seg-green':''}" data-vt="ingreso">↑ INGRESOS</button>
+          <button class="seg-btn ${tipo==='gasto'?'active seg-red':''}" data-vt="gasto">Gastos</button>
+          <button class="seg-btn ${tipo==='ingreso'?'active seg-green':''}" data-vt="ingreso">Ingresos</button>
         </div>
         <div class="ring-grid">
           ${slotHTML}
@@ -892,7 +905,7 @@ function renderResumen(){
             ${donutSVG(catData,viewTotal)}
             <div class="ring-center-txt">
               <div style="font-size:12px;color:var(--text2)">${tipo==='gasto'?'Gastos':'Ingresos'}</div>
-              <div style="font-family:var(--mono);font-size:17px;font-weight:600;color:${tipoColor}">${fmtShort(viewTotal)}</div>
+              <div style="font-size:22px;font-weight:500;color:${tipoColor}">${fmtShort(viewTotal)}</div>
               <div style="font-family:var(--mono);font-size:11px;color:${tipo==='gasto'?'var(--green)':'var(--red)'}">${fmtShort(tipo==='gasto'?mIng:mGas)}</div>
             </div>
           </div>
@@ -926,7 +939,7 @@ function renderResumen(){
         </div>
 
         <div class="card">
-          <div class="section-title">${tipo==='gasto'?'GASTOS':'INGRESOS'} POR CATEGORÍA</div>
+          <div class="section-title">${tipo==='gasto'?'Gastos':'Ingresos'} por categoría</div>
           ${catData.length?catData.map(c=>{
             const pct=viewTotal>0?c.val/viewTotal*100:0;
             return `<div class="cat-row" data-quick="${esc(c.nombre)}">
@@ -936,19 +949,19 @@ function renderResumen(){
                 <div class="bar" style="height:4px;margin-top:6px"><div style="width:${pct}%;background:${c.color}"></div></div>
                 <div style="text-align:right;font-family:var(--mono);font-size:10px;color:${c.color};margin-top:3px">${Math.round(pct)}%</div>
               </div>
-            </div>`;}).join(''):`<div class="empty">SIN ${tipo==='gasto'?'GASTOS':'INGRESOS'} ESTE MES</div>`}
+            </div>`;}).join(''):`<div class="empty">Sin ${tipo==='gasto'?'gastos':'ingresos'} este mes</div>`}
         </div>
       </div>
     </div>
 
     <div class="card" style="margin-bottom:16px">
-      <div class="section-title">MOVIMIENTOS — ${state.calDate.split('-').reverse().join('/')}</div>
-      ${dayTxns.length?dayTxns.map(t=>txnRow(t)).join(''):`<div class="empty" style="padding:8px 0">SIN MOVIMIENTOS ESTE DÍA · tocá una barra para ver otro día</div>`}
+      <div class="section-title">Movimientos del ${state.calDate.split('-').reverse().join('/')}</div>
+      ${dayTxns.length?dayTxns.map(t=>txnRow(t)).join(''):`<div class="empty" style="padding:8px 0">Sin movimientos este día · tocá una barra para ver otro día</div>`}
     </div>
 
     <div class="card">
-      <div class="section-title">ÚLTIMOS MOVIMIENTOS</div>
-      ${filteredTxns().length?filteredTxns().slice(0,8).map(t=>txnRow(t)).join(''):`<div class="empty">SIN MOVIMIENTOS AÚN</div>`}
+      <div class="section-title">Últimos movimientos</div>
+      ${filteredTxns().length?filteredTxns().slice(0,8).map(t=>txnRow(t)).join(''):`<div class="empty">Sin movimientos aún</div>`}
     </div>
   `;
 

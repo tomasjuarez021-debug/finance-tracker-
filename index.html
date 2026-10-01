@@ -300,6 +300,10 @@
 
 <header class="mobile-header">
   <div class="mobile-brand">MID <span>VAULT</span></div>
+  <div style="display:flex;gap:6px">
+    <button id="exportBtnMobile" class="btn btn-accent" style="font-size:12px;padding:6px 10px">Guardar</button>
+    <label class="btn btn-ghost" style="font-size:12px;padding:6px 10px;cursor:pointer">Restaurar<input type="file" id="importFileMobile" accept=".json,.html,application/json,text/html" style="display:none"></label>
+  </div>
 </header>
 <nav class="bottom-nav" id="bottomNav"></nav>
 <div class="toast" id="toast"></div>
@@ -316,7 +320,7 @@
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
       <button id="exportBtn" class="btn btn-accent" style="width:100%;font-size:11px;padding:7px">💾 GUARDAR ARCHIVO</button>
-      <label id="importLabel" class="btn btn-ghost" style="width:100%;font-size:11px;padding:7px;text-align:center;cursor:pointer">↑ RESTAURAR BACKUP<input type="file" id="importFile" accept=".json" style="display:none"></label>
+      <label id="importLabel" class="btn btn-ghost" style="width:100%;font-size:11px;padding:7px;text-align:center;cursor:pointer">↑ RESTAURAR BACKUP<input type="file" id="importFile" accept=".json,.html,application/json,text/html" style="display:none"></label>
     </div>
   </aside>
   <main class="main">
@@ -1791,7 +1795,10 @@ document.getElementById('importFile').onchange=(e)=>{
   const reader = new FileReader();
   reader.onload = (ev)=>{
     try {
-      const data = JSON.parse(ev.target.result);
+      // Acepta backup .json o el mid-vault.html descargado (datos en SAVED_DATA)
+      const txt = ev.target.result;
+      const m = txt.match(/<script id="SAVED_DATA"[^>]*>([\s\S]*?)<\/script>/);
+      const data = JSON.parse(m ? m[1] : txt);
       if(data.ct_txns)    { state.txns    = data.ct_txns;    localStorage.setItem('ct_txns',    JSON.stringify(state.txns)); }
       if(data.ct_wallets) { state.wallets = data.ct_wallets; localStorage.setItem('ct_wallets', JSON.stringify(state.wallets)); }
       if(data.ct_invest)  { state.invest  = data.ct_invest;  localStorage.setItem('ct_invest',  JSON.stringify(state.invest)); }

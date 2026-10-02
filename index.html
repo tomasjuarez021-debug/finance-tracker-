@@ -277,6 +277,51 @@
     input[type="date"]::-webkit-date-and-time-value{text-align:left}
     .btn-big{width:100%;padding:14px;font-size:16px;border-radius:12px}
 
+    /* ─── ESTILO UNIFICADO ─── */
+    .page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .page-head .page-title{margin:0;border:none;padding:0;font-size:24px;font-weight:700;letter-spacing:-.3px}
+    .btn-sm{display:inline-flex;align-items:center;gap:4px;padding:8px 14px;font-size:13px;border-radius:20px}
+    .btn-big{display:block}
+    .btn-link-danger{display:block;width:100%;background:none;border:none;color:var(--red);font-size:14px;padding:14px 0 2px}
+    .card{border-radius:14px}
+    .hero-sub{font-size:13px;color:var(--text2);margin-top:2px}
+    .hero-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));margin-top:14px;border-top:1px solid rgba(240,185,11,.2);padding-top:12px}
+    .hero-stats>div{display:flex;flex-direction:column;gap:3px;border-right:1px solid rgba(240,185,11,.2)}
+    .hero-stats>div:last-child{border-right:none}
+    .hero-stats span{font-size:12px;color:var(--text2)}
+    .hero-stats b{font-size:16px;font-weight:500}
+    .alloc-bar{display:flex;height:8px;border-radius:8px;overflow:hidden;margin:14px auto 0;max-width:420px;gap:2px}
+    .list-row{display:flex;align-items:center;gap:12px;width:100%;background:none;border:none;border-bottom:1px solid var(--border);color:var(--text);padding:12px 4px;text-align:left;font-family:inherit}
+    .list-row:last-child{border-bottom:none}
+    .list-row:active{background:var(--surface2)}
+    .list-main{flex:1;min-width:0}
+    .list-title{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .list-sub{font-size:12px;color:var(--text2);margin-top:2px}
+    .list-right{text-align:right;flex-shrink:0}
+    .list-amount{font-size:15px;font-weight:500}
+    .quote-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .quote-tile{background:var(--surface2);border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;gap:4px;min-width:0}
+    .quote-tile span{font-size:12px;color:var(--text2)}
+    .quote-tile b{font-size:15px;font-weight:500;color:var(--gold2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .quote-tile small{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .chips{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{border:1px solid var(--border2);background:var(--surface2);color:var(--text2);border-radius:20px;padding:7px 12px;font-size:13px}
+    .chip.sel{background:var(--accent);border-color:var(--accent);color:#0b0e11;font-weight:500}
+    .modal-title{font-size:17px;font-weight:600;margin-bottom:14px}
+    .proj{margin-top:12px;background:var(--surface2);border-radius:12px;padding:4px 12px}
+    .proj-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+    .proj-row:last-child{border-bottom:none}
+    .proj-row>span{color:var(--text2);font-size:13px}
+    .proj-row>div{text-align:right;display:flex;flex-direction:column}
+    .proj-row b{color:var(--green);font-weight:500}
+    .proj-row small{font-size:11px;color:var(--text3)}
+    .tab-btn .icon{display:inline-flex}
+    .sim-row{display:flex;gap:8px;align-items:center}
+    .sim-row .field{width:110px;flex:none}
+    input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+    input[type=number]{-moz-appearance:textfield}
+    .bottom-nav-btn{font-family:var(--sans);font-size:11px}
+
     /* ─── MOBILE HEADER ─── */
     .mobile-header{display:none}
     .bottom-nav{display:none}
@@ -332,8 +377,8 @@
       <div id="capitalNeto" class="sub ok">+$0,00 neto</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
-      <button id="exportBtn" class="btn btn-accent" style="width:100%;font-size:11px;padding:7px">💾 GUARDAR ARCHIVO</button>
-      <label id="importLabel" class="btn btn-ghost" style="width:100%;font-size:11px;padding:7px;text-align:center;cursor:pointer">↑ RESTAURAR BACKUP<input type="file" id="importFile" accept=".json,.html,application/json,text/html" style="display:none"></label>
+      <button id="exportBtn" class="btn btn-accent" style="width:100%;font-size:11px;padding:7px">Guardar archivo</button>
+      <label id="importLabel" class="btn btn-ghost" style="width:100%;font-size:11px;padding:7px;text-align:center;cursor:pointer">Restaurar backup<input type="file" id="importFile" accept=".json,.html,application/json,text/html" style="display:none"></label>
     </div>
   </aside>
   <main class="main">
@@ -392,9 +437,11 @@ const ICONS = {
   dots:'<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
   plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
   chevron:'<path d="m6 9 6 6 6-6"/>',
+  pie:'<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>',
+  list:'<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
   calendar:'<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
 };
-const UI_ICONS = ['plus','chevron','calendar'];
+const UI_ICONS = ['plus','chevron','calendar','pie','list'];
 const CAT_ICON_KEYS = Object.keys(ICONS).filter(k=>!UI_ICONS.includes(k));
 // Compatibilidad: categorías guardadas con emoji
 const EMOJI_TO_ICON = {"🍽️":"utensils","🎬":"film","🚌":"bus","🛒":"cart","💊":"health","🛍️":"bag","👨‍👩‍👧":"family","🏦":"bank","🎁":"gift","🏠":"home","💡":"bulb","🎓":"school","🐱":"cat","🐶":"paw","🚗":"car","⛽":"fuel","☕":"coffee","🍺":"beer","✈️":"plane","🎮":"game","📱":"phone","💪":"gym","👕":"shirt","💇":"scissors","🧾":"receipt","💳":"card","📦":"box","💼":"briefcase","💻":"laptop","📈":"trend","💹":"percent","⭐":"star","💰":"coins","🎵":"music","⚽":"ball","🏥":"cross","🍔":"pizza","🍕":"pizza","🧸":"baby","🔧":"wrench"};
@@ -429,10 +476,10 @@ const DEFAULT_CATS = [
 const LEGACY_ICONS = {"Alimentación":"pizza","Vivienda":"home","Entretenimiento":"film","Ropa":"shirt","Deuda":"card"};
 const PALETTE = ["#f0b90b","#0ecb81","#4a9eff","#f6465d","#9b6dff","#00c2ff","#ff6b35","#14b8a6","#e879f9"];
 const TABS = [
-  {id:"resumen",    label:"Resumen",     icon:"▣"},
-  {id:"movimientos",label:"Movimientos", icon:"↕"},
-  {id:"activos",    label:"Activos",     icon:"◈"},
-  {id:"inversiones",label:"Inversiones", icon:"△"},
+  {id:"resumen",    label:"Resumen",     icon:"pie"},
+  {id:"movimientos",label:"Movimientos", icon:"list"},
+  {id:"activos",    label:"Activos",     icon:"wallet"},
+  {id:"inversiones",label:"Inversiones", icon:"trend"},
 ];
 const INIT_WALLETS = [
   {id:1, nombre:"Efectivo",     tipo:"físico",   saldo:0, moneda:"ARS"},
@@ -542,11 +589,18 @@ function downloadHTML(){
 
 // Monto: solo números, acepta coma o punto decimal
 function bindMontoInput(el){
-  el.addEventListener('input',()=>{
-    let v=el.value.replace(/[^0-9.,]/g,'').replace('.',',');
-    const k=v.indexOf(','); if(k>=0) v=v.slice(0,k+1)+v.slice(k+1).replace(/[.,]/g,'').slice(0,2);
-    el.value=v;
-  });
+  const f=()=>{
+    let v=el.value;
+    if(v.endsWith('.')) v=v.slice(0,-1)+',';      // el punto tipeado al final es decimal
+    const neg=v.trim().startsWith('-');
+    v=v.replace(/[^0-9,]/g,'');
+    const k=v.indexOf(',');
+    let ent=k>=0?v.slice(0,k):v, dec=k>=0?v.slice(k+1).replace(/,/g,'').slice(0,2):null;
+    ent=ent.replace(/^0+(?=\d)/,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+    el.value=(neg?'-':'')+ent+(dec!==null?','+dec:'');
+  };
+  el.addEventListener('input',f);
+  if(el.value) f();
 }
 function parseMonto(v){ return Number(String(v).replace(/\./g,'').replace(',','.'))||0; }
 
@@ -561,7 +615,7 @@ function showToast(msg){
 }
 
 function fmt(n){ return `$${Number(n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}`; }
-function fmtPct(n){ return `${Number(n||0).toFixed(2)}%`; }
+function fmtPct(n){ return `${Number(n||0).toLocaleString('es-AR',{maximumFractionDigits:2})}%`; }
 function todayStr(){ return new Date().toISOString().split('T')[0]; }
 function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
 // Excluir transacciones de billeteras cripto (BTC/USDT) de totales en ARS
@@ -648,7 +702,7 @@ function renderMenu(){
   const menuEl = document.getElementById('menu');
   menuEl.innerHTML = TABS.map(t=>`
     <button class="tab-btn ${state.tab===t.id?'active':''}" data-tab="${t.id}">
-      <span class="icon">${t.icon}</span>${t.label}
+      <span class="icon">${svgIcon(t.icon,18)}</span>${t.label}
     </button>
   `).join('');
   menuEl.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{state.tab=btn.dataset.tab;render();});
@@ -676,7 +730,7 @@ function updateSidebar(){
   if(nav){
     nav.innerHTML=TABS.map(t=>`
       <button class="bottom-nav-btn ${state.tab===t.id?'active':''}" data-tab="${t.id}">
-        <span style="font-size:16px;line-height:1">${t.icon}</span>
+        ${svgIcon(t.icon,22)}
         <span>${t.label}</span>
       </button>`).join('');
     nav.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{state.tab=btn.dataset.tab;render();});
@@ -1109,7 +1163,7 @@ function renderMovimientos(){
   `).join('');
 
   root.innerHTML=`
-    <div class="page-title">MOVIMIENTOS</div>
+    <div class="page-head"><div class="page-title">Movimientos</div></div>
     <div class="content-grid">
       <div class="card">
         <div class="seg">
@@ -1132,8 +1186,8 @@ function renderMovimientos(){
       </div>
       <div class="card">
         <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
-          <span>HISTORIAL</span>
-          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${state.txns.length} REGISTROS</span>
+          <span>Historial</span>
+          <span class="list-sub">${state.txns.length} movimientos</span>
         </div>
         <div style="max-height:520px;overflow:auto">
           ${state.txns.length ? state.txns.map(t=>txnRow(t,true)).join('') : `<div class="empty">SIN MOVIMIENTOS</div>`}
@@ -1175,581 +1229,315 @@ function renderMovimientos(){
 }
 
 // ─── RENDER ACTIVOS ───
-function renderActivos(){
-  const root=document.getElementById('tab-activos');
-  const {usd,usdt,btc,lastFetch}=state.quotes;
-
-  // BTC/USDT parity derived from: (BTC en ARS) / (USDT en ARS)
-  // Si btcARS = btc * usd  y  usdtARS = usdt * usd
-  // entonces btcUsdt = btcARS / usdtARS = btc / usdt
-  const btcUsdt = (btc && usdt && usdt > 0) ? btc / usdt : null;
-
-  // Por cada wallet calcular su valor en ARS, USD y USDT
-  function walletUSD(w){
-    const s=Number(w.saldo||0);
-    if(w.moneda==='ARS') return usd ? s/usd : null;
-    if(w.moneda==='USD') return s;
-    if(w.moneda==='USDT') return usdt ? s*usdt : s; // USDT ≈ USD
-    if(w.moneda==='BTC') return btc ? s*btc : null;
-    return null;
-  }
-  function walletUSDT(w){
-    const usdVal=walletUSD(w);
-    if(usdVal===null) return null;
-    return usdt ? usdVal/usdt : usdVal; // USDT ≈ 1 USD si usdt=1
-  }
-  function isCrypto(w){ return ['BTC','USDT','ETH'].includes(w.moneda) || w.tipo==='cripto'; }
-
-  // Totales
-  const totalARS = state.wallets.reduce((a,w)=>{
-    const v=walletValueARS(w); return a+(v!==null?v:Number(w.saldo||0));
-  },0);
-  const totalUSD = usd ? state.wallets.reduce((a,w)=>{
-    const v=walletUSD(w); return a+(v!==null?v:0);
-  },0) : null;
-  const totalUSDT = usdt ? state.wallets.reduce((a,w)=>{
-    const v=walletUSDT(w); return a+(v!==null?v:0);
-  },0) : null;
-
-  // Separar en ARS, USD y cripto (en USDT)
-  const arsWallets  = state.wallets.filter(w=>w.moneda==='ARS' && !isCrypto(w));
-  const usdWallets  = state.wallets.filter(w=>['USD','EUR'].includes(w.moneda));
-  const cryptoWallets = state.wallets.filter(w=>isCrypto(w));
-
-  const subTotalARS  = arsWallets.reduce((a,w)=>a+Number(w.saldo||0),0);
-  const subTotalUSD  = usdWallets.reduce((a,w)=>{ const v=walletUSD(w); return a+(v||0); },0);
-  const subTotalCryptoUSDT = cryptoWallets.reduce((a,w)=>{ const v=walletUSDT(w); return a+(v||0); },0);
-
-  const fmtUSD = n => '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const timeStr=lastFetch?new Date(lastFetch).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'';
-  const hasCotiz = !!(usd);
-
-  root.innerHTML=`
-    <div class="page-title">ACTIVOS</div>
-
-    <!-- Card principal total -->
-    <div class="card" style="margin-bottom:16px">
-      <div>
-        <div class="stat-label" style="margin-bottom:6px">PATRIMONIO TOTAL</div>
-        <div class="stat-val yellow" style="font-size:30px">${fmt(totalARS)}</div>
-        ${totalUSD!==null?`<div style="font-family:var(--mono);font-size:12px;color:var(--text3);margin-top:4px">≈ ${fmtUSD(totalUSD)} USD</div>`:'<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px">cargá cotizaciones para ver en USD</div>'}
-      </div>
-      <!-- Desglose horizontal -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
-        <div style="padding-right:16px;border-right:1px solid var(--border)">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.8px;margin-bottom:5px">EN ARS</div>
-          <div style="font-family:var(--mono);font-size:15px;font-weight:500;color:var(--text)">${fmt(subTotalARS)}</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">pesos argentinos</div>
-        </div>
-        <div style="padding:0 16px;border-right:1px solid var(--border)">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.8px;margin-bottom:5px">EN USD</div>
-          <div style="font-family:var(--mono);font-size:15px;font-weight:500;color:var(--blue)">${hasCotiz&&subTotalUSD>0?fmtUSD(subTotalUSD):'—'}</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">${hasCotiz&&subTotalUSD>0?fmt(subTotalUSD*usd)+' ARS':'sin cotización'}</div>
-        </div>
-        <div style="padding-left:16px">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.8px;margin-bottom:5px">EN CRIPTO (USDT)</div>
-          <div style="font-family:var(--mono);font-size:15px;font-weight:500;color:var(--green)">${subTotalCryptoUSDT>0?fmtUSD(subTotalCryptoUSDT)+' USDT':'—'}</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">${subTotalCryptoUSDT>0&&usd&&usdt?fmt(subTotalCryptoUSDT*usdt*usd)+' ARS':'sin cotización'}</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="assets-grid">
-      <div class="card">
-        <div class="section-title">MIS BILLETERAS</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${state.wallets.length ? state.wallets.map((w,i)=>{
-            const color = w.color || PALETTE[i%PALETTE.length];
-            const arsVal=walletValueARS(w);
-            const displayARS=arsVal!==null?arsVal:Number(w.saldo||0);
-            const pct=totalARS>0?(displayARS/totalARS*100):0;
-            const isVirtual = ['virtual','cripto','inversión'].includes(w.tipo);
-            const isForeign = w.moneda!=='ARS';
-            return `
-              <div class="wallet">
-                <div class="wallet-left">
-                  <div style="width:8px;height:8px;border-radius:2px;background:${color};flex-shrink:0"></div>
-                  <div>
-                    <div style="font-family:var(--mono);font-size:13px;font-weight:500">${esc(w.nombre)}</div>
-                    <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">
-                      <span class="badge badge-gray">${esc(w.tipo.toUpperCase())}</span>
-                      <span class="badge badge-gray">${esc(w.moneda)}</span>
-                      ${isVirtual && w.rendAnual ? `<span class="badge badge-green">${fmtPct(w.rendAnual)} TNA</span>` : ''}
-                    </div>
-                  </div>
-                </div>
-                <div class="wallet-actions" style="flex-direction:column;align-items:flex-end;gap:2px">
-                  ${w.moneda!=='ARS'
-                    ? `<span class="wallet-amount">${Number(w.saldo||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:8})} ${esc(w.moneda)}</span>
-                       <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">
-                         ${arsVal!==null ? `≈ ${fmt(arsVal)} ARS` : `<span style="color:var(--text3)">sin cotización</span>`}
-                       </span>`
-                    : `<span class="wallet-amount">${fmt(w.saldo)}</span>`
-                  }
-                  <div style="display:flex;gap:6px;margin-top:3px">
-                    <button class="btn-ghost" style="font-size:10px;padding:3px 7px" data-edit-wallet="${w.id}">EDITAR</button>
-                    <button class="btn-danger" data-del-wallet="${w.id}">✕</button>
-                  </div>
-                </div>
-              </div>
-              ${isVirtual && w.rendAnual ? `
-                <div style="margin:-4px 0 4px 16px;padding:6px 10px;background:var(--bg);border-radius:4px;border:1px solid var(--border)">
-                  <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">
-                    REND. DIARIO: <span style="color:var(--green)">+${fmt(Number(w.saldo||0) * (Number(w.rendAnual)/100) / 365)}</span>
-                    <span style="margin-left:8px">MENSUAL: <span style="color:var(--green)">+${fmt(Number(w.saldo||0) * (Number(w.rendAnual)/100) / 12)}</span></span>
-                  </div>
-                </div>` : ''}
-              ${totalARS>0?`
-                <div style="margin:-2px 0 4px 0;padding:0 2px">
-                  <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:3px">
-                    <span>${esc(w.nombre)}</span><span style="color:${color}">${pct.toFixed(1)}%</span>
-                  </div>
-                  <div class="bar"><div style="width:${pct}%;background:${color}"></div></div>
-                </div>`:''}`
-          }).join('') : `<div class="empty">SIN BILLETERAS</div>`}
-        </div>
-      </div>
-      <div>
-        <div class="card">
-          <div class="section-title">AGREGAR BILLETERA</div>
-          <div class="form-stack">
-            <div><label class="label">Nombre</label><input id="walletNombre" class="field" type="text" placeholder="Ej: Brubank"></div>
-            <div><label class="label">Tipo</label>
-              <select id="walletTipo" class="field">
-                <option>virtual</option><option>físico</option><option>inversión</option><option>cripto</option>
-              </select>
-            </div>
-            <div><label class="label">Saldo inicial</label><input id="walletSaldo" class="field" type="number" inputmode="decimal" placeholder="0.00"></div>
-            <div><label class="label">Moneda</label>
-              <select id="walletMoneda" class="field">
-                <option>ARS</option><option>USD</option><option>EUR</option><option>USDT</option><option>BTC</option>
-              </select>
-            </div>
-            <div>
-              <label class="label">Color (billeteras virtuales)</label>
-              <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
-                <input id="walletColor" type="color" value="#f0b90b" style="width:36px;height:32px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;padding:2px">
-                <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">Seleccioná el color del ícono</span>
-              </div>
-            </div>
-            <div>
-              <label class="label">Rendimiento anual % <span style="color:var(--text3)">(opcional — se aplica diario)</span></label>
-              <input id="walletRend" class="field" type="number" inputmode="decimal" placeholder="Ej: 60 para 60% TNA" step="0.01" min="0">
-            </div>
-            <button id="addWallet" class="btn btn-accent" style="width:100%">AGREGAR BILLETERA</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Cotizaciones del día -->
-    <div class="card" style="margin-top:20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div class="section-title" style="margin:0">COTIZACIONES</div>
-        <div style="display:flex;align-items:center;gap:10px">
-          ${state.quotes.lastFetch?`<span style="font-family:var(--mono);font-size:9px;color:var(--text3)">act. ${new Date(state.quotes.lastFetch).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}</span>`:''}
-          <button id="toggleQuoteForm" class="btn btn-ghost" style="padding:4px 10px;font-size:11px">+ CARGAR</button>
-        </div>
-      </div>
-
-      <!-- Formulario de carga con toggle USD/ARS por paridad -->
-      <div id="quoteFormWrap" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:14px">
-
-        <!-- USD blue: siempre en ARS -->
-        <div style="margin-bottom:12px">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;margin-bottom:6px">USD BLUE</div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <input id="qiUsd" class="field" type="number" inputmode="decimal" placeholder="${state.quotes.usd||'Ej: 1400'}" step="1" style="flex:1">
-            <span style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap">ARS por USD</span>
-          </div>
-        </div>
-
-        <!-- USDT: toggle USD o ARS -->
-        <div style="margin-bottom:12px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px">USDT</span>
-            <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px;gap:2px">
-              <button id="usdt-unit-usd" class="seg-btn active" style="padding:2px 8px;font-size:10px;border-radius:3px">USD</button>
-              <button id="usdt-unit-ars" class="seg-btn" style="padding:2px 8px;font-size:10px;border-radius:3px">ARS</button>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <input id="qiUsdt" class="field" type="number" inputmode="decimal" placeholder="${state.quotes.usdt||'Ej: 0.9998'}" step="0.0001" style="flex:1">
-            <span id="usdt-unit-label" style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap">USD por USDT</span>
-          </div>
-        </div>
-
-        <!-- BTC: toggle USD o ARS -->
-        <div style="margin-bottom:14px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px">BTC</span>
-            <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px;gap:2px">
-              <button id="btc-unit-usd" class="seg-btn active" style="padding:2px 8px;font-size:10px;border-radius:3px">USD</button>
-              <button id="btc-unit-ars" class="seg-btn" style="padding:2px 8px;font-size:10px;border-radius:3px">ARS</button>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <input id="qiBtc" class="field" type="number" inputmode="decimal" placeholder="${state.quotes.btc||'Ej: 83000'}" step="1" style="flex:1">
-            <span id="btc-unit-label" style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap">USD por BTC</span>
-          </div>
-        </div>
-
-        <button id="qiSave" class="btn btn-accent" style="width:100%">GUARDAR</button>
-      </div>
-
-      <!-- Listado -->
-      <div style="display:grid;grid-template-columns:2fr 2fr 2fr 2fr;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;padding:0 8px 8px;border-bottom:1px solid var(--border)">
-        <span>PAR</span><span style="text-align:right">PRECIO (ARS)</span><span style="text-align:right">PRECIO (USD)</span><span style="text-align:right">ESTADO</span>
-      </div>
-      ${[
-        {par:'USD / ARS', arsVal:state.quotes.usd, usdVal:1, ok:!!state.quotes.usd},
-        {par:'USDT / ARS', arsVal:state.quotes.usdt&&state.quotes.usd?state.quotes.usdt*state.quotes.usd:null, usdVal:state.quotes.usdt, ok:!!(state.quotes.usdt&&state.quotes.usd)},
-        {par:'BTC / ARS',  arsVal:state.quotes.btc&&state.quotes.usd?state.quotes.btc*state.quotes.usd:null,  usdVal:state.quotes.btc,  ok:!!(state.quotes.btc&&state.quotes.usd)},
-      ].map(r=>`
-        <div style="display:grid;grid-template-columns:2fr 2fr 2fr 2fr;font-family:var(--mono);font-size:12px;align-items:center;padding:12px 8px;border-bottom:1px solid var(--border)">
-          <span style="font-weight:500;color:var(--text)">${r.par}</span>
-          <span style="text-align:right;color:${r.ok?'var(--text)':'var(--text3)'}">
-            ${r.arsVal?'$'+Number(r.arsVal).toLocaleString('es-AR',{maximumFractionDigits:r.arsVal<10?4:0}):'—'}
-          </span>
-          <span style="text-align:right;color:var(--text2)">
-            ${r.usdVal?'$'+Number(r.usdVal).toLocaleString('en-US',{maximumFractionDigits:r.usdVal<10?4:0}):'—'}
-          </span>
-          <span style="text-align:right">
-            <span class="badge ${r.ok?'badge-green':'badge-gray'}">${r.ok?'OK':'SIN DATOS'}</span>
-          </span>
-        </div>`).join('')}
-    </div>
-  `;
-  document.getElementById('toggleQuoteForm').onclick=()=>{
-    const wrap=document.getElementById('quoteFormWrap');
-    const btn=document.getElementById('toggleQuoteForm');
-    const open=wrap.style.display==='none';
-    wrap.style.display=open?'block':'none';
-    btn.textContent=open?'✕ CERRAR':'+ CARGAR';
-  };
-
-  // Toggle USDT unidad
-  let usdtInARS = false;
-  document.getElementById('usdt-unit-usd').onclick=()=>{
-    usdtInARS=false;
-    document.getElementById('usdt-unit-usd').classList.add('active');
-    document.getElementById('usdt-unit-ars').classList.remove('active');
-    document.getElementById('usdt-unit-label').textContent='USD por USDT';
-    document.getElementById('qiUsdt').placeholder=state.quotes.usdt||'Ej: 0.9998';
-    document.getElementById('qiUsdt').step='0.0001';
-  };
-  document.getElementById('usdt-unit-ars').onclick=()=>{
-    usdtInARS=true;
-    document.getElementById('usdt-unit-ars').classList.add('active');
-    document.getElementById('usdt-unit-usd').classList.remove('active');
-    document.getElementById('usdt-unit-label').textContent='ARS por USDT';
-    const arsVal = state.quotes.usdt&&state.quotes.usd?Math.round(state.quotes.usdt*state.quotes.usd):'';
-    document.getElementById('qiUsdt').placeholder=arsVal||'Ej: 1398';
-    document.getElementById('qiUsdt').step='1';
-  };
-
-  // Toggle BTC unidad
-  let btcInARS = false;
-  document.getElementById('btc-unit-usd').onclick=()=>{
-    btcInARS=false;
-    document.getElementById('btc-unit-usd').classList.add('active');
-    document.getElementById('btc-unit-ars').classList.remove('active');
-    document.getElementById('btc-unit-label').textContent='USD por BTC';
-    document.getElementById('qiBtc').placeholder=state.quotes.btc||'Ej: 83000';
-    document.getElementById('qiBtc').step='1';
-  };
-  document.getElementById('btc-unit-ars').onclick=()=>{
-    btcInARS=true;
-    document.getElementById('btc-unit-ars').classList.add('active');
-    document.getElementById('btc-unit-usd').classList.remove('active');
-    document.getElementById('btc-unit-label').textContent='ARS por BTC';
-    const arsVal = state.quotes.btc&&state.quotes.usd?Math.round(state.quotes.btc*state.quotes.usd):'';
-    document.getElementById('qiBtc').placeholder=arsVal||'Ej: 116000000';
-    document.getElementById('qiBtc').step='1000';
-  };
-
-  document.getElementById('qiSave').onclick=()=>{
-    const u  = Number(document.getElementById('qiUsd').value);
-    const ut = Number(document.getElementById('qiUsdt').value);
-    const b  = Number(document.getElementById('qiBtc').value);
-    if(u>0) state.quotes.usd = u;
-    if(ut>0){
-      if(usdtInARS && u>0) state.quotes.usdt = ut/u;       // ARS→USD
-      else if(usdtInARS && state.quotes.usd) state.quotes.usdt = ut/state.quotes.usd;
-      else state.quotes.usdt = ut;                           // ya en USD
-    }
-    if(b>0){
-      if(btcInARS && u>0) state.quotes.btc = b/u;           // ARS→USD
-      else if(btcInARS && state.quotes.usd) state.quotes.btc = b/state.quotes.usd;
-      else state.quotes.btc = b;                             // ya en USD
-    }
-    state.quotes.lastFetch = Date.now();
-    save('ct_quotes', state.quotes);
-    renderActivos();
-    updateSidebar();
-    showToast('Cotizaciones guardadas');
-  };
-  document.getElementById('addWallet').onclick=()=>{
-    const nombre=document.getElementById('walletNombre').value.trim();
-    const tipo=document.getElementById('walletTipo').value;
-    const saldo=Number(document.getElementById('walletSaldo').value||0);
-    const moneda=document.getElementById('walletMoneda').value;
-    const color=document.getElementById('walletColor').value||'#f0b90b';
-    const rendAnual=Number(document.getElementById('walletRend').value||0);
-    if(!nombre) return;
-    state.wallets.push({id:Date.now(),nombre,tipo,saldo,moneda,color,rendAnual:rendAnual||null});
-    save('ct_wallets',state.wallets);
-    render();
-  };
-  root.querySelectorAll('[data-edit-wallet]').forEach(btn=>btn.onclick=()=>{
-    const id=Number(btn.dataset.editWallet);
-    const w=state.wallets.find(x=>x.id===id);
-    if(!w) return;
-    const modal=document.createElement('div');
-    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px';
-    modal.innerHTML=`
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;min-width:300px;max-width:400px;width:100%">
-        <div style="font-family:var(--mono);font-size:13px;font-weight:500;margin-bottom:16px;color:var(--text)">EDITAR — ${esc(w.nombre)}</div>
-        <div class="form-stack">
-          <div><label class="label">Saldo actual</label><input id="editSaldo" class="field" type="number" inputmode="decimal" value="${w.saldo}" step="0.01"></div>
-          <div>
-            <label class="label">Color</label>
-            <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
-              <input id="editColor" type="color" value="${w.color||'#f0b90b'}" style="width:36px;height:32px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;padding:2px">
-            </div>
-          </div>
-          <div><label class="label">Rendimiento anual % TNA</label><input id="editRend" class="field" type="number" inputmode="decimal" value="${w.rendAnual||''}" placeholder="0 = sin rendimiento" step="0.01"></div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:16px">
-          <button id="editSave" class="btn btn-accent" style="flex:1">GUARDAR</button>
-          <button id="editCancel" class="btn btn-ghost">CANCELAR</button>
-        </div>
-      </div>`;
-    document.body.appendChild(modal);
-    modal.querySelector('#editCancel').onclick=()=>modal.remove();
-    modal.querySelector('#editSave').onclick=()=>{
-      w.saldo=Number(modal.querySelector('#editSaldo').value||w.saldo);
-      w.color=modal.querySelector('#editColor').value;
-      const rend=Number(modal.querySelector('#editRend').value);
-      w.rendAnual=rend>0?rend:null;
-      save('ct_wallets',state.wallets);
-      modal.remove();
-      render();
-      showToast(`${w.nombre} actualizado`);
-    };
-    modal.onclick=e=>{if(e.target===modal) modal.remove();};
-  });
-  root.querySelectorAll('[data-del-wallet]').forEach(btn=>btn.onclick=()=>{
-    state.wallets=state.wallets.filter(w=>String(w.id)!==btn.dataset.delWallet);
-    save('ct_wallets',state.wallets);
-    render();
+const WALLET_TIPOS = [
+  {k:'virtual',  label:'Virtual',   icon:'phone'},
+  {k:'físico',   label:'Efectivo',  icon:'wallet'},
+  {k:'inversión',label:'Inversión', icon:'trend'},
+  {k:'cripto',   label:'Cripto',    icon:'coins'},
+];
+const MONEDAS = ['ARS','USD','EUR','USDT','BTC'];
+function walletIconKey(w){ return (WALLET_TIPOS.find(t=>t.k===w.tipo)||WALLET_TIPOS[0]).icon; }
+function fmtUSD(n){ return 'US$ '+Number(n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtCur(n, moneda){
+  if(moneda==='ARS') return fmt(n);
+  if(moneda==='USD'||moneda==='USDT') return `${Number(n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})} ${moneda}`;
+  return `${Number(n||0).toLocaleString('es-AR',{maximumFractionDigits:8})} ${moneda}`;
+}
+function chipsHTML(name, options, selected){
+  return `<div class="chips">${options.map(o=>{const k=o.k??o;const l=o.label??o;return `<button type="button" class="chip ${k===selected?'sel':''}" data-${name}="${esc(k)}">${esc(l)}</button>`;}).join('')}</div>`;
+}
+function bindChips(root, name, onPick){
+  root.querySelectorAll(`[data-${name}]`).forEach(b=>b.onclick=()=>{
+    root.querySelectorAll(`[data-${name}]`).forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel'); onPick(b.dataset[name]);
   });
 }
 
-// ─── RENDER INVERSIONES ───
-function renderInversiones(){
-  const root=document.getElementById('tab-inversiones');
-  const totalCap=state.invest.reduce((a,i)=>a+Number(i.capital||0),0);
-  const rend1y=state.invest.reduce((a,i)=>{
-    const r=proyectar(Number(i.capital||0),Number(i.tna),12)-Number(i.capital||0);
-    return a+r;
-  },0);
+function renderActivos(){
+  const root=document.getElementById('tab-activos');
+  const {usd,usdt,btc,lastFetch}=state.quotes;
+  const isCrypto=w=>['BTC','USDT'].includes(w.moneda);
+  const valARS=w=>{const v=walletValueARS(w);return v!==null?v:Number(w.saldo||0);};
+
+  const totalARS=state.wallets.reduce((a,w)=>a+valARS(w),0);
+  const pesos =state.wallets.filter(w=>w.moneda==='ARS').reduce((a,w)=>a+valARS(w),0);
+  const dolares=state.wallets.filter(w=>['USD','EUR'].includes(w.moneda)).reduce((a,w)=>a+valARS(w),0);
+  const cripto=state.wallets.filter(isCrypto).reduce((a,w)=>a+valARS(w),0);
+
+  const alloc=state.wallets.map((w,i)=>({w,v:valARS(w),color:w.color||PALETTE[i%PALETTE.length]})).filter(x=>x.v>0);
+  const allocBar=totalARS>0?`<div class="alloc-bar">${alloc.map(x=>`<div style="width:${x.v/totalARS*100}%;background:${x.color}" title="${esc(x.w.nombre)}"></div>`).join('')}</div>`:'';
+
+  const quoteTiles=[
+    {label:'Dólar blue', val:usd?fmt(usd).replace(/,00$/,''):'—', sub:'por USD'},
+    {label:'USDT',       val:usdt&&usd?fmt(usdt*usd).replace(/,00$/,''):'—', sub:usdt?fmtUSD(usdt):'sin dato'},
+    {label:'Bitcoin',    val:btc?'US$ '+fmtShort(btc).slice(1):'—', sub:btc&&usd?fmtShort(btc*usd):'sin dato'},
+  ];
 
   root.innerHTML=`
-    <div class="page-title">INVERSIONES</div>
-    <div class="cards-3">
-      <div class="card"><div class="stat-label">CAPITAL INVERTIDO</div><div class="stat-val yellow">${fmt(totalCap)}</div></div>
-      <div class="card"><div class="stat-label">RENDIMIENTO 12M PROY.</div><div class="stat-val green">+${fmt(rend1y)}</div></div>
-      <div class="card"><div class="stat-label">TASA PROMEDIO TNA</div><div class="stat-val">${totalCap>0?fmtPct(state.invest.reduce((a,i)=>a+Number(i.tna||0)*Number(i.capital||0),0)/totalCap):'0.00%'}</div></div>
+    <div class="page-head">
+      <div class="page-title">Activos</div>
+      <button id="newWallet" class="btn btn-accent btn-sm">${svgIcon('plus',16)} Billetera</button>
     </div>
-    <div class="invest-grid">
-      <div>
-        <div class="card" style="margin-bottom:12px">
-          <div class="section-title">NUEVA INVERSIÓN</div>
-          <div class="form-stack">
-            <div><label class="label">Nombre</label><input id="invNombre" class="field" type="text" placeholder="Ej: Plazo Fijo Banco Nación"></div>
-            <div><label class="label">Tipo</label>
-              <select id="invTipo" class="field">
-                <option value="plazo_fijo">Plazo Fijo</option>
-                <option value="fci">FCI</option>
-                <option value="accion">Acción / Bono</option>
-                <option value="cripto">Cripto</option>
-                <option value="cedear">CEDEAR</option>
-                <option value="otro">Otro</option>
-              </select>
-            </div>
-            <div>
-              <label class="label">TNA % <span style="color:var(--text3)">(tasa nominal anual)</span></label>
-              <input id="invTna" class="field" type="number" inputmode="decimal" placeholder="Ej: 75" step="0.01">
-            </div>
-            <div><label class="label">Capital inicial</label><input id="invCapital" class="field" type="number" inputmode="decimal" placeholder="0.00"></div>
-            <div>
-              <label class="label">Tipo de interés</label>
-              <div class="seg" style="margin-bottom:0">
-                <button id="inv-compuesto" class="seg-btn active">COMPUESTO</button>
-                <button id="inv-simple" class="seg-btn">SIMPLE</button>
-              </div>
-            </div>
-            <div><label class="label">Moneda</label>
-              <select id="invMoneda" class="field">
-                <option>ARS</option><option>USD</option><option>USDT</option><option>EUR</option>
-              </select>
-            </div>
-            <button id="addInvest" class="btn btn-accent" style="width:100%">AGREGAR INVERSIÓN</button>
-          </div>
-        </div>
-      </div>
-      <div>
-        <div class="card" style="margin-bottom:12px">
-          <div class="section-title">PORTFOLIO</div>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            ${state.invest.length ? state.invest.map((inv,i)=>{
-              const color=PALETTE[i%PALETTE.length];
-              const cap=Number(inv.capital||0);
-              const tna=Number(inv.tna||0);
-              const cmp = inv.compuesto === true; // solo true si se guardó explícitamente como true
-              const r3  = proyectar(cap, tna, 3,  cmp) - cap;
-              const r6  = proyectar(cap, tna, 6,  cmp) - cap;
-              const r12 = proyectar(cap, tna, 12, cmp) - cap;
-              const r12s = proyectar(cap, tna, 12, false) - cap; // siempre simple para comparar
-              const tipos={'plazo_fijo':'PF','fci':'FCI','accion':'ACC','cripto':'CRIPTO','cedear':'CEDEAR','otro':'OTRO'};
-              return `
-                <div class="invest-card">
-                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-                    <div style="display:flex;align-items:center;gap:8px">
-                      <div style="width:8px;height:8px;border-radius:2px;background:${color}"></div>
-                      <div>
-                        <div class="invest-name">${esc(inv.nombre)}</div>
-                        <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">
-                          <span class="badge badge-gray">${tipos[inv.tipo]||inv.tipo.toUpperCase()}</span>
-                          <span class="badge badge-gray">${esc(inv.moneda)}</span>
-                          <span class="badge ${cmp?'badge-yellow':'badge-blue'}">${cmp?'COMPUESTO':'SIMPLE'}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div style="text-align:right">
-                      <div class="invest-rate">${fmtPct(inv.tna)} TNA</div>
-                      <div class="invest-meta">${fmt(cap)} capital</div>
-                    </div>
-                  </div>
-                  <div style="background:var(--bg);border-radius:6px;padding:10px;border:1px solid var(--border)">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                      <div class="invest-meta">RENDIMIENTO PROYECTADO</div>
-                      <div class="invest-meta" style="color:${cmp?'var(--accent)':'var(--blue)'}">INT. ${cmp?'COMPUESTO':'SIMPLE'}</div>
-                    </div>
-                    <div class="projected-row"><span style="color:var(--text2)">3 meses</span><div style="text-align:right"><div class="amount-positive">+${fmt(r3)}</div><div style="font-family:var(--mono);font-size:10px;color:var(--text3)">total ${fmt(cap+r3)}</div></div></div>
-                    <div class="projected-row"><span style="color:var(--text2)">6 meses</span><div style="text-align:right"><div class="amount-positive">+${fmt(r6)}</div><div style="font-family:var(--mono);font-size:10px;color:var(--text3)">total ${fmt(cap+r6)}</div></div></div>
-                    <div class="projected-row">
-                      <span style="color:var(--text2)">12 meses</span>
-                      <div style="text-align:right">
-                        <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
-                          <span class="amount-positive">+${fmt(r12)}</span>
-                          <span style="font-family:var(--mono);font-size:10px;color:var(--accent)">${fmtPct((r12/Math.max(cap,1))*100)}</span>
-                        </div>
-                        <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">total ${fmt(cap+r12)}</div>
-                      </div>
-                    </div>
-                    ${cap > 0 ? `
-                    <div class="projected-row" style="border-top:1px dashed var(--border);margin-top:4px;padding-top:8px">
-                      <span style="color:var(--text3);font-size:10px">vs. interés simple 12m</span>
-                      <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">+${fmt(r12s)} <span style="color:${r12>r12s?'var(--green)':'var(--text3)'};font-size:10px">(${r12>r12s?'+':'-'}${fmt(Math.abs(r12-r12s))} ${r12>r12s?'extra':'menos'})</span></span>
-                    </div>` : ''}
-                  </div>
-                  <div style="margin-top:10px;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap">
-                    <div style="display:flex;align-items:center;gap:6px">
-                      <label class="label" style="display:inline;margin:0">Ajustar capital:</label>
-                      <input class="field" style="width:110px" type="number" inputmode="decimal" placeholder="Nuevo capital" data-inv-cap="${inv.id}">
-                    </div>
-                    <button class="btn-danger" data-del-inv="${inv.id}">ELIMINAR</button>
-                  </div>
-                </div>`
-            }).join('') : `<div class="empty">SIN INVERSIONES REGISTRADAS</div>`}
-          </div>
-        </div>
 
-        <!-- Simulador rápido -->
-        <div class="card">
-          <div class="section-title">SIMULADOR</div>
-          <div class="form-stack">
-            <div><label class="label">Capital a simular</label><input id="simCap" class="field" type="number" inputmode="decimal" placeholder="100000"></div>
-            <div><label class="label">TNA %</label><input id="simTna" class="field" type="number" inputmode="decimal" placeholder="75"></div>
-            <div>
-              <label class="label">Tipo de interés</label>
-              <div class="seg" style="margin-bottom:0">
-                <button id="sim-compuesto" class="seg-btn active">COMPUESTO</button>
-                <button id="sim-simple" class="seg-btn">SIMPLE</button>
-              </div>
+    <div class="hero">
+      <div class="hero-acc-label">Patrimonio total</div>
+      <div class="hero-acc-val">${fmt(totalARS)}</div>
+      ${usd?`<div class="hero-sub">≈ ${fmtUSD(totalARS/usd)}</div>`:''}
+      ${allocBar}
+      <div class="hero-stats">
+        <div><span>Pesos</span><b>${fmtShort(pesos)}</b></div>
+        <div><span>Dólares</span><b>${fmtShort(dolares)}</b></div>
+        <div><span>Cripto</span><b>${fmtShort(cripto)}</b></div>
+      </div>
+    </div>
+
+    <div class="cards-2">
+      <div class="card">
+        <div class="section-title">Billeteras</div>
+        ${state.wallets.length?state.wallets.map((w,i)=>{
+          const color=w.color||PALETTE[i%PALETTE.length];
+          const ars=walletValueARS(w);
+          const pct=totalARS>0?valARS(w)/totalARS*100:0;
+          const tipo=(WALLET_TIPOS.find(t=>t.k===w.tipo)||{label:w.tipo}).label;
+          const extra=w.rendAnual?` · <span style="color:var(--green)">+${fmtShort(Number(w.saldo||0)*w.rendAnual/100/12)}/mes</span>`:'';
+          return `
+          <button class="list-row" data-edit-wallet="${w.id}">
+            ${catIcon({icon:walletIconKey(w),color},40)}
+            <div class="list-main">
+              <div class="list-title">${esc(w.nombre)}</div>
+              <div class="list-sub">${esc(tipo)} · ${esc(w.moneda)}${extra}</div>
             </div>
-            <button id="simBtn" class="btn btn-ghost" style="width:100%">CALCULAR</button>
-          </div>
-          <div id="simResult" style="margin-top:12px"></div>
+            <div class="list-right">
+              <div class="list-amount">${fmtCur(w.saldo,w.moneda)}</div>
+              <div class="list-sub">${w.moneda!=='ARS'?(ars!==null?'≈ '+fmtShort(ars):'sin cotización'):Math.round(pct)+'%'}</div>
+            </div>
+          </button>`;}).join(''):`<div class="empty">Todavía no tenés billeteras</div>`}
+      </div>
+
+      <div class="card">
+        <div class="head-row">
+          <div class="section-title" style="margin:0">Cotizaciones</div>
+          <button id="editQuotes" class="btn btn-ghost btn-sm">Actualizar</button>
         </div>
+        <div class="quote-grid">
+          ${quoteTiles.map(q=>`<div class="quote-tile"><span>${q.label}</span><b>${q.val}</b><small>${q.sub}</small></div>`).join('')}
+        </div>
+        ${lastFetch?`<div class="list-sub" style="margin-top:10px">Actualizado ${new Date(lastFetch).toLocaleString('es-AR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>`:''}
       </div>
     </div>
   `;
 
-  // Toggle interés compuesto / simple
-  let invCompuesto = true;
-  document.getElementById('inv-compuesto').onclick=()=>{ invCompuesto=true; document.getElementById('inv-compuesto').classList.add('active'); document.getElementById('inv-simple').classList.remove('active'); };
-  document.getElementById('inv-simple').onclick=()=>{ invCompuesto=false; document.getElementById('inv-simple').classList.add('active'); document.getElementById('inv-compuesto').classList.remove('active'); };
+  document.getElementById('newWallet').onclick=()=>openWalletModal(null);
+  root.querySelectorAll('[data-edit-wallet]').forEach(b=>b.onclick=()=>openWalletModal(state.wallets.find(w=>w.id===Number(b.dataset.editWallet))));
+  document.getElementById('editQuotes').onclick=openQuotesModal;
+}
 
-  document.getElementById('addInvest').onclick=()=>{
-    const nombre=document.getElementById('invNombre').value.trim();
-    const tipo=document.getElementById('invTipo').value;
-    const tna=Number(document.getElementById('invTna').value);
-    const capital=Number(document.getElementById('invCapital').value||0);
-    const moneda=document.getElementById('invMoneda').value;
-    if(!nombre||!tna) return;
-    state.invest.push({id:Date.now(),nombre,tipo,tna,capital,moneda,compuesto:invCompuesto});
-    save('ct_invest',state.invest);
-    render();
+function openWalletModal(w){
+  const isNew=!w;
+  let tipo=w?.tipo||'virtual', moneda=w?.moneda||'ARS', color=w?.color||CAT_COLORS[0];
+  const modal=openModal(`
+    <div class="modal-title">${isNew?'Nueva billetera':esc(w.nombre)}</div>
+    <div class="form-stack">
+      <div class="amount-box ingreso"><span class="amount-cur">$</span><input id="wSaldo" class="amount-input" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${w?String(w.saldo).replace('.',','):''}"></div>
+      <input id="wNombre" class="field" type="text" placeholder="Nombre (ej: Brubank)" value="${esc(w?.nombre||'')}">
+      <div><label class="label">Tipo</label>${chipsHTML('wtipo',WALLET_TIPOS,tipo)}</div>
+      <div><label class="label">Moneda</label>${chipsHTML('wmon',MONEDAS,moneda)}</div>
+      <div><label class="label">Color</label><div class="color-grid" id="wColors"></div></div>
+      <input id="wRend" class="field" type="number" inputmode="decimal" placeholder="Rendimiento anual % (opcional)" value="${w?.rendAnual||''}">
+    </div>
+    <button id="wSave" class="btn btn-accent btn-big" style="margin-top:16px">${isNew?'Agregar':'Guardar'}</button>
+    ${isNew?'':`<button id="wDel" class="btn btn-link-danger">Eliminar billetera</button>`}`);
+  bindMontoInput(modal.querySelector('#wSaldo'));
+  bindChips(modal,'wtipo',v=>tipo=v);
+  bindChips(modal,'wmon',v=>moneda=v);
+  const drawColors=()=>{
+    const el=modal.querySelector('#wColors');
+    el.innerHTML=CAT_COLORS.map(c=>`<button class="color-btn ${c===color?'sel':''}" data-c="${c}" style="background:${c}"></button>`).join('');
+    el.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{color=b.dataset.c;drawColors();});
   };
+  drawColors();
+  modal.querySelector('#wSave').onclick=()=>{
+    const nombre=modal.querySelector('#wNombre').value.trim();
+    if(!nombre){ modal.querySelector('#wNombre').focus(); return; }
+    const saldo=parseMonto(modal.querySelector('#wSaldo').value);
+    const rend=Number(modal.querySelector('#wRend').value)||null;
+    if(isNew) state.wallets.push({id:Date.now(),nombre,tipo,saldo,moneda,color,rendAnual:rend});
+    else Object.assign(w,{nombre,tipo,saldo,moneda,color,rendAnual:rend});
+    save('ct_wallets',state.wallets);
+    modal.remove(); render();
+    showToast(isNew?`${nombre} agregada`:`${nombre} actualizada`);
+  };
+  if(!isNew) modal.querySelector('#wDel').onclick=()=>{
+    if(!confirm(`¿Eliminar "${w.nombre}"?`)) return;
+    state.wallets=state.wallets.filter(x=>x.id!==w.id);
+    save('ct_wallets',state.wallets);
+    modal.remove(); render();
+  };
+}
 
-  root.querySelectorAll('[data-del-inv]').forEach(btn=>btn.onclick=()=>{
-    state.invest=state.invest.filter(i=>String(i.id)!==btn.dataset.delInv);
-    save('ct_invest',state.invest);
-    render();
-  });
+function openQuotesModal(){
+  const q=state.quotes;
+  const modal=openModal(`
+    <div class="modal-title">Cotizaciones</div>
+    <div class="form-stack">
+      <div><label class="label">Dólar blue (pesos por dólar)</label><input id="qUsd" class="field" type="number" inputmode="decimal" placeholder="Ej: 1400" value="${q.usd||''}"></div>
+      <div><label class="label">USDT (pesos por USDT)</label><input id="qUsdt" class="field" type="number" inputmode="decimal" placeholder="Ej: 1398" value="${q.usdt&&q.usd?Math.round(q.usdt*q.usd):''}"></div>
+      <div><label class="label">Bitcoin (dólares por BTC)</label><input id="qBtc" class="field" type="number" inputmode="decimal" placeholder="Ej: 83000" value="${q.btc?Math.round(q.btc):''}"></div>
+    </div>
+    <button id="qSaveQ" class="btn btn-accent btn-big" style="margin-top:16px">Guardar</button>`);
+  modal.querySelector('#qSaveQ').onclick=()=>{
+    const u=Number(modal.querySelector('#qUsd').value);
+    const ut=Number(modal.querySelector('#qUsdt').value);
+    const b=Number(modal.querySelector('#qBtc').value);
+    if(u>0) q.usd=u;
+    if(ut>0 && q.usd) q.usdt=ut/q.usd;
+    if(b>0) q.btc=b;
+    q.lastFetch=Date.now();
+    save('ct_quotes',q);
+    modal.remove(); render();
+    showToast('Cotizaciones guardadas');
+  };
+}
 
-  root.querySelectorAll('[data-inv-cap]').forEach(input=>input.onchange=()=>{
-    const id=Number(input.dataset.invCap);
-    const val=Number(input.value);
-    if(isNaN(val)||val<0) return;
-    const inv=state.invest.find(i=>i.id===id);
-    if(inv){inv.capital=val;save('ct_invest',state.invest);renderInversiones();}
-  });
+// ─── RENDER INVERSIONES ───
+const INV_TIPOS = [
+  {k:'plazo_fijo',label:'Plazo fijo',icon:'bank'},
+  {k:'fci',       label:'FCI',       icon:'percent'},
+  {k:'accion',    label:'Acción/Bono',icon:'trend'},
+  {k:'cedear',    label:'CEDEAR',    icon:'briefcase'},
+  {k:'cripto',    label:'Cripto',    icon:'coins'},
+  {k:'otro',      label:'Otro',      icon:'tag'},
+];
+const invTipo=k=>INV_TIPOS.find(t=>t.k===k)||INV_TIPOS[INV_TIPOS.length-1];
 
-  let simCompuesto = true;
-  document.getElementById('sim-compuesto').onclick=()=>{ simCompuesto=true; document.getElementById('sim-compuesto').classList.add('active'); document.getElementById('sim-simple').classList.remove('active'); };
-  document.getElementById('sim-simple').onclick=()=>{ simCompuesto=false; document.getElementById('sim-simple').classList.add('active'); document.getElementById('sim-compuesto').classList.remove('active'); };
+function renderInversiones(){
+  const root=document.getElementById('tab-inversiones');
+  const totalCap=state.invest.reduce((a,i)=>a+Number(i.capital||0),0);
+  const gan12=state.invest.reduce((a,i)=>a+proyectar(i.capital,i.tna,12,i.compuesto===true)-Number(i.capital||0),0);
+  const tnaProm=totalCap>0?state.invest.reduce((a,i)=>a+Number(i.tna||0)*Number(i.capital||0),0)/totalCap:0;
 
-  document.getElementById('simBtn').onclick=()=>{
-    const cap=Number(document.getElementById('simCap').value);
-    const tna=Number(document.getElementById('simTna').value);
-    if(!cap||!tna){document.getElementById('simResult').innerHTML='';return;}
-    const r3=proyectar(cap,tna,3,simCompuesto)-cap;
-    const r6=proyectar(cap,tna,6,simCompuesto)-cap;
-    const r12=proyectar(cap,tna,12,simCompuesto)-cap;
-    const r24=proyectar(cap,tna,24,simCompuesto)-cap;
-    const r12alt=proyectar(cap,tna,12,!simCompuesto)-cap;
-    const fmtRow=(meses,gan)=>`
-      <div class="projected-row">
-        <span style="color:var(--text2)">${meses} meses</span>
-        <div style="text-align:right">
-          <div class="amount-positive">+${fmt(gan)}</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">total ${fmt(cap+gan)}</div>
-        </div>
-      </div>`;
-    document.getElementById('simResult').innerHTML=`
-      <div style="background:var(--bg);border-radius:6px;border:1px solid var(--border);padding:10px">
-        <div class="invest-meta" style="margin-bottom:8px">CAPITAL: ${fmt(cap)} · ${fmtPct(tna)} TNA · INT. ${simCompuesto?'COMPUESTO MENSUAL':'SIMPLE'}</div>
-        ${fmtRow(3,r3)}${fmtRow(6,r6)}${fmtRow(12,r12)}${fmtRow(24,r24)}
-        <div class="projected-row" style="border-top:1px dashed var(--border);margin-top:4px;padding-top:8px">
-          <span style="color:var(--text3);font-size:10px">vs. ${simCompuesto?'simple':'compuesto'} a 12m</span>
-          <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">+${fmt(r12alt)} <span style="color:${simCompuesto?'var(--green)':'var(--red)'};font-size:10px">(${simCompuesto?'+':'−'}${fmt(Math.abs(r12-r12alt))})</span></span>
-        </div>
+  root.innerHTML=`
+    <div class="page-head">
+      <div class="page-title">Inversiones</div>
+      <button id="newInv" class="btn btn-accent btn-sm">${svgIcon('plus',16)} Inversión</button>
+    </div>
+
+    <div class="hero">
+      <div class="hero-acc-label">Capital invertido</div>
+      <div class="hero-acc-val">${fmt(totalCap)}</div>
+      <div class="hero-stats">
+        <div><span>Ganancia 12 meses</span><b style="color:var(--green)">+${fmtShort(gan12)}</b></div>
+        <div><span>TNA promedio</span><b style="color:var(--gold2)">${fmtPct(tnaProm)}</b></div>
       </div>
-    `;
+    </div>
+
+    <div class="cards-2">
+      <div class="card">
+        <div class="section-title">Portafolio</div>
+        ${state.invest.length?state.invest.map((inv,i)=>{
+          const t=invTipo(inv.tipo);
+          const g=proyectar(inv.capital,inv.tna,12,inv.compuesto===true)-Number(inv.capital||0);
+          return `
+          <button class="list-row" data-inv="${inv.id}">
+            ${catIcon({icon:t.icon,color:PALETTE[i%PALETTE.length]},40)}
+            <div class="list-main">
+              <div class="list-title">${esc(inv.nombre)}</div>
+              <div class="list-sub">${t.label} · ${esc(inv.moneda)} · ${inv.compuesto===true?'Compuesto':'Simple'}</div>
+            </div>
+            <div class="list-right">
+              <div class="list-amount">${fmt(inv.capital)}</div>
+              <div class="list-sub"><span style="color:var(--gold2)">${fmtPct(inv.tna)}</span> · <span style="color:var(--green)">+${fmtShort(g)}/año</span></div>
+            </div>
+          </button>`;}).join(''):`<div class="empty">Todavía no tenés inversiones</div>`}
+      </div>
+
+      <div class="card">
+        <div class="section-title">Simulador</div>
+        <div class="form-stack">
+          <div class="amount-box ingreso"><span class="amount-cur">$</span><input id="simCap" class="amount-input" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+          <div class="sim-row">
+            <input id="simTna" class="field" type="number" inputmode="decimal" placeholder="TNA %">
+            ${chipsHTML('simt',[{k:'c',label:'Compuesto'},{k:'s',label:'Simple'}],'c')}
+          </div>
+        </div>
+        <div id="simResult"></div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('newInv').onclick=openInvModal;
+  root.querySelectorAll('[data-inv]').forEach(b=>b.onclick=()=>openInvDetail(state.invest.find(i=>i.id===Number(b.dataset.inv))));
+
+  let simComp=true;
+  const sim=()=>{
+    const cap=parseMonto(document.getElementById('simCap').value);
+    const tna=Number(document.getElementById('simTna').value);
+    document.getElementById('simResult').innerHTML=cap&&tna?projRows(cap,tna,simComp,[3,6,12,24]):'';
+  };
+  bindMontoInput(document.getElementById('simCap'));
+  document.getElementById('simCap').addEventListener('input',sim);
+  document.getElementById('simTna').addEventListener('input',sim);
+  bindChips(root,'simt',v=>{simComp=v==='c';sim();});
+}
+
+function projRows(cap,tna,comp,meses){
+  return `<div class="proj">${meses.map(m=>{
+    const g=proyectar(cap,tna,m,comp)-cap;
+    return `<div class="proj-row"><span>${m} meses</span><div><b>+${fmt(g)}</b><small>total ${fmt(cap+g)}</small></div></div>`;
+  }).join('')}</div>`;
+}
+
+function openInvDetail(inv){
+  const t=invTipo(inv.tipo);
+  const cmp=inv.compuesto===true;
+  const modal=openModal(`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      ${catIcon({icon:t.icon,color:'var(--accent)'},44)}
+      <div><div class="modal-title" style="margin:0">${esc(inv.nombre)}</div>
+      <div class="list-sub">${t.label} · ${esc(inv.moneda)} · ${fmtPct(inv.tna)} TNA · ${cmp?'Compuesto':'Simple'}</div></div>
+    </div>
+    <label class="label">Capital</label>
+    <div class="amount-box ingreso"><span class="amount-cur">$</span><input id="idCap" class="amount-input" type="text" inputmode="decimal" autocomplete="off" value="${String(inv.capital||0).replace('.',',')}"></div>
+    <div id="idProj"></div>
+    <button id="idSave" class="btn btn-accent btn-big" style="margin-top:16px">Guardar</button>
+    <button id="idDel" class="btn btn-link-danger">Eliminar inversión</button>`);
+  const capEl=modal.querySelector('#idCap');
+  bindMontoInput(capEl);
+  const draw=()=>{modal.querySelector('#idProj').innerHTML=projRows(parseMonto(capEl.value),inv.tna,cmp,[3,6,12]);};
+  capEl.addEventListener('input',draw); draw();
+  modal.querySelector('#idSave').onclick=()=>{inv.capital=parseMonto(capEl.value);save('ct_invest',state.invest);modal.remove();render();};
+  modal.querySelector('#idDel').onclick=()=>{
+    if(!confirm(`¿Eliminar "${inv.nombre}"?`)) return;
+    state.invest=state.invest.filter(i=>i.id!==inv.id);save('ct_invest',state.invest);modal.remove();render();
+  };
+}
+
+function openInvModal(){
+  let tipo='plazo_fijo', moneda='ARS', comp='c';
+  const modal=openModal(`
+    <div class="modal-title">Nueva inversión</div>
+    <div class="form-stack">
+      <div class="amount-box ingreso"><span class="amount-cur">$</span><input id="niCap" class="amount-input" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+      <input id="niNombre" class="field" type="text" placeholder="Nombre (ej: Plazo fijo Nación)">
+      <input id="niTna" class="field" type="number" inputmode="decimal" placeholder="TNA %">
+      <div><label class="label">Tipo</label>${chipsHTML('nit',INV_TIPOS,tipo)}</div>
+      <div><label class="label">Moneda</label>${chipsHTML('nim',['ARS','USD','USDT','EUR'],moneda)}</div>
+      <div><label class="label">Interés</label>${chipsHTML('nic',[{k:'c',label:'Compuesto'},{k:'s',label:'Simple'}],comp)}</div>
+    </div>
+    <button id="niSave" class="btn btn-accent btn-big" style="margin-top:16px">Agregar</button>`);
+  bindMontoInput(modal.querySelector('#niCap'));
+  bindChips(modal,'nit',v=>tipo=v);
+  bindChips(modal,'nim',v=>moneda=v);
+  bindChips(modal,'nic',v=>comp=v);
+  modal.querySelector('#niSave').onclick=()=>{
+    const nombre=modal.querySelector('#niNombre').value.trim();
+    const tna=Number(modal.querySelector('#niTna').value);
+    if(!nombre){modal.querySelector('#niNombre').focus();return;}
+    if(!tna){modal.querySelector('#niTna').focus();return;}
+    state.invest.push({id:Date.now(),nombre,tipo,tna,capital:parseMonto(modal.querySelector('#niCap').value),moneda,compuesto:comp==='c'});
+    save('ct_invest',state.invest);
+    modal.remove(); render();
+    showToast(`${nombre} agregada`);
   };
 }
 

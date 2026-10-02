@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Mid Vault">
-  <title>Mid Vault</title>
-  <meta name="application-name" content="Mid Vault">
+  <meta name="apple-mobile-web-app-title" content="Pulsor">
+  <title>Pulsor</title>
+  <meta name="application-name" content="Pulsor">
   <meta name="theme-color" content="#0b0e11">
-  <link rel="apple-touch-icon" href="mid-vault-icon.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="mid-vault-icon.png">
-  <link rel="icon" type="image/png" href="mid-vault-icon.png">
-  <link rel="shortcut icon" type="image/png" href="mid-vault-icon.png">
+  <link rel="apple-touch-icon" href="pulsor-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="pulsor-icon.png">
+  <link rel="icon" type="image/png" href="pulsor-icon.png">
+  <link rel="shortcut icon" type="image/png" href="pulsor-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -357,7 +357,7 @@
 <body>
 
 <header class="mobile-header">
-  <div class="mobile-brand">MID <span>VAULT</span></div>
+  <div class="mobile-brand">Pulsor<span>.</span></div>
   <div style="display:flex;gap:6px">
     <button id="exportBtnMobile" class="btn btn-accent" style="font-size:12px;padding:6px 10px">Guardar</button>
     <label class="btn btn-ghost" style="font-size:12px;padding:6px 10px;cursor:pointer">Restaurar<input type="file" id="importFileMobile" accept=".json,.html,application/json,text/html" style="display:none"></label>
@@ -369,7 +369,7 @@
 <div class="app">
   <button id="sidebarCollapse" class="sidebar-collapse" aria-label="Toggle sidebar">▶</button>
   <aside id="sidebar" class="sidebar">
-    <div class="brand">MID <span>VAULT</span></div>
+    <div class="brand">Pulsor<span>.</span></div>
     <nav id="menu"></nav>
     <div class="side-card">
       <div class="k">Patrimonio total</div>
@@ -592,10 +592,10 @@ function downloadHTML(){
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url;
-  a.download = 'mid-vault.html';
+  a.download = 'pulsor.html';
   a.click();
   URL.revokeObjectURL(url);
-  showToast('💾 mid-vault.html guardado — reemplazá el archivo anterior');
+  showToast('Backup guardado (pulsor.html)');
 }
 
 // Monto: solo números, acepta coma o punto decimal
@@ -1634,7 +1634,7 @@ document.getElementById('importFile').onchange=(e)=>{
   const reader = new FileReader();
   reader.onload = (ev)=>{
     try {
-      // Acepta backup .json o el mid-vault.html descargado (datos en SAVED_DATA)
+      // Acepta backup .json o el .html descargado (datos en SAVED_DATA)
       const txt = ev.target.result;
       const m = txt.match(/<script id="SAVED_DATA"[^>]*>([\s\S]*?)<\/script>/);
       const data = JSON.parse(m ? m[1] : txt);

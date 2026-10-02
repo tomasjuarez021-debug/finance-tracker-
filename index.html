@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Mid Vault">
@@ -174,7 +174,7 @@
 
     /* ─── WALLET SELECTOR IN FORM ─── */
     .wallet-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-    .wallet-pill{border:1px solid var(--border);border-radius:4px;padding:5px 10px;background:transparent;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;transition:.1s}
+    .wallet-pill{border:1px solid var(--border);border-radius:16px;padding:7px 12px;font-size:13px !important;background:transparent;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;transition:.1s}
     .wallet-pill:hover{border-color:var(--border2);color:var(--text)}
     .wallet-pill.selected{border-color:var(--accent);color:var(--accent);background:rgba(240,185,11,.06)}
 
@@ -265,6 +265,18 @@
     .brand,.mobile-brand{letter-spacing:0;font-weight:700}
     .month-nav{font-weight:500;letter-spacing:.3px}
     .hero-acc-val{font-weight:500;font-size:28px}
+    /* ─── FORM DE MOVIMIENTO ─── */
+    .amount-box{display:flex;align-items:center;gap:6px;background:var(--surface2);border:2px solid var(--red);border-radius:14px;padding:10px 16px}
+    .amount-box.ingreso{border-color:var(--green)}
+    .amount-cur{font-size:30px;font-weight:500;color:var(--red)}
+    .amount-box.ingreso .amount-cur,.amount-box.ingreso .amount-input{color:var(--green)}
+    .amount-input{flex:1;min-width:0;width:100%;background:none;border:none;outline:none;font-family:var(--sans);font-size:38px;font-weight:500;color:var(--red);padding:2px 0}
+    .amount-input::placeholder{color:var(--text3)}
+    .form-row{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+    input[type="date"].field{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;min-height:42px;text-align:left}
+    input[type="date"]::-webkit-date-and-time-value{text-align:left}
+    .btn-big{width:100%;padding:14px;font-size:16px;border-radius:12px}
+
     /* ─── MOBILE HEADER ─── */
     .mobile-header{display:none}
     .bottom-nav{display:none}
@@ -281,6 +293,7 @@
       .mobile-header{flex:none}
       .app{flex:1;min-height:0;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
       .main{padding:14px 12px 16px;overflow:visible;flex:none}
+      .field,select.field{font-size:16px}
       .mobile-header{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));z-index:30}
       .mobile-brand{font-family:var(--mono);font-weight:600;font-size:16px;color:var(--text)}
       .mobile-brand span{color:var(--accent)}
@@ -527,6 +540,16 @@ function downloadHTML(){
   showToast('💾 mid-vault.html guardado — reemplazá el archivo anterior');
 }
 
+// Monto: solo números, acepta coma o punto decimal
+function bindMontoInput(el){
+  el.addEventListener('input',()=>{
+    let v=el.value.replace(/[^0-9.,]/g,'').replace('.',',');
+    const k=v.indexOf(','); if(k>=0) v=v.slice(0,k+1)+v.slice(k+1).replace(/[.,]/g,'').slice(0,2);
+    el.value=v;
+  });
+}
+function parseMonto(v){ return Number(String(v).replace(/\./g,'').replace(',','.'))||0; }
+
 let _toastTimer=null;
 function showToast(msg){
   const el=document.getElementById('toast');
@@ -762,7 +785,7 @@ function openTxnModal(catNombre, tipo){
       </div>
     </div>
     <div class="form-stack">
-      <div><label class="label">Monto</label><input id="qMonto" class="field" type="number" placeholder="0.00" step="0.01" style="font-size:20px;padding:12px;color:${tipo==='ingreso'?'var(--green)':'var(--red)'}"></div>
+      <div><label class="label">Monto</label><div class="amount-box ${tipo}"><span class="amount-cur">$</span><input id="qMonto" class="amount-input" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div></div>
       <div><label class="label">Billetera</label><div class="wallet-pills" id="qWallets"></div></div>
       <div><label class="label">Fecha</label><input id="qFecha" class="field" type="date" value="${todayStr()}"></div>
       <div><label class="label">Descripción</label><input id="qDesc" class="field" type="text" placeholder="Opcional"></div>
@@ -777,10 +800,11 @@ function openTxnModal(catNombre, tipo){
     el.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{walletId=Number(b.dataset.w);drawWallets();});
   };
   drawWallets();
+  bindMontoInput(modal.querySelector('#qMonto'));
   setTimeout(()=>modal.querySelector('#qMonto').focus(),50);
   modal.querySelector('#qCancel').onclick=()=>modal.remove();
   modal.querySelector('#qSave').onclick=()=>{
-    const monto=Number(modal.querySelector('#qMonto').value);
+    const monto=parseMonto(modal.querySelector('#qMonto').value);
     if(!monto||monto<=0||!walletId) return;
     modal.remove();
     addTxn({id:Date.now(),tipo,categoria:cat.nombre,monto,descripcion:modal.querySelector('#qDesc').value.trim(),fecha:modal.querySelector('#qFecha').value||todayStr(),walletId});
@@ -1075,6 +1099,7 @@ function txnRow(t, withDelete=false){
 // ─── RENDER MOVIMIENTOS ───
 function renderMovimientos(){
   const root=document.getElementById('tab-movimientos');
+  if(!state.wallets.some(w=>w.id===state.formWallet)) state.formWallet=state.wallets[0]?.id||null;
   const formCats=catsOf(state.formTipo);
   if(!formCats.some(c=>c.nombre===state.formCat)) state.formCat=formCats[0]?.nombre||'Otros';
   const catPicker=formCats.map(c=>`<button class="cat-pick ${state.formCat===c.nombre?'sel':''}" data-fcat="${esc(c.nombre)}">${catIcon(c,38)}<span>${esc(c.nombre)}</span></button>`).join('')
@@ -1087,22 +1112,22 @@ function renderMovimientos(){
     <div class="page-title">MOVIMIENTOS</div>
     <div class="content-grid">
       <div class="card">
-        <div class="section-title">NUEVO MOVIMIENTO</div>
         <div class="seg">
-          <button id="tipo-gasto" class="seg-btn ${state.formTipo==='gasto'?'active seg-red':''}">↓ GASTO</button>
-          <button id="tipo-ingreso" class="seg-btn ${state.formTipo==='ingreso'?'active seg-green':''}">↑ INGRESO</button>
+          <button id="tipo-gasto" class="seg-btn ${state.formTipo==='gasto'?'active seg-red':''}">Gasto</button>
+          <button id="tipo-ingreso" class="seg-btn ${state.formTipo==='ingreso'?'active seg-green':''}">Ingreso</button>
         </div>
         <div class="form-stack">
-          <div><label class="label">Categoría</label><div class="cat-pick-grid small">${catPicker}</div></div>
-          <div><label class="label">Monto</label><input id="txnMonto" class="field" type="number" placeholder="0.00" step="0.01"></div>
-          <div><label class="label">Fecha</label><input id="txnFecha" class="field" type="date" value="${todayStr()}"></div>
-          <div><label class="label">Descripción</label><input id="txnDesc" class="field" type="text" placeholder="Opcional"></div>
-          <div>
-            <label class="label">Billetera <span style="color:var(--red)">*</span></label>
-            <div class="wallet-pills" id="walletPillsContainer">${walletPills}</div>
-            ${!state.formWallet ? `<div id="walletError" style="font-family:var(--mono);font-size:10px;color:var(--red);margin-top:5px">Seleccioná una billetera para continuar.</div>` : `<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:5px">El saldo se ajustará automáticamente.</div>`}
+          <div class="amount-box ${state.formTipo}">
+            <span class="amount-cur">$</span>
+            <input id="txnMonto" class="amount-input" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
           </div>
-          <button id="addTxn" class="btn ${state.formTipo==='ingreso'?'btn-green':'btn-red'}" style="width:100%;margin-top:4px">REGISTRAR</button>
+          <div class="cat-pick-grid small">${catPicker}</div>
+          <div class="wallet-pills" id="walletPillsContainer">${walletPills}</div>
+          <div class="form-row">
+            <input id="txnFecha" class="field" type="date" value="${todayStr()}">
+            <input id="txnDesc" class="field" type="text" placeholder="Descripción">
+          </div>
+          <button id="addTxn" class="btn btn-big ${state.formTipo==='ingreso'?'btn-green':'btn-red'}">Registrar</button>
         </div>
       </div>
       <div class="card">
@@ -1117,6 +1142,7 @@ function renderMovimientos(){
     </div>
   `;
 
+  bindMontoInput(document.getElementById('txnMonto'));
   document.getElementById('tipo-gasto').onclick=()=>{state.formTipo='gasto';renderMovimientos();};
   document.getElementById('tipo-ingreso').onclick=()=>{state.formTipo='ingreso';renderMovimientos();};
 
@@ -1131,7 +1157,7 @@ function renderMovimientos(){
 
   document.getElementById('addTxn').onclick=()=>{
     const categoria=state.formCat;
-    const monto=Number(document.getElementById('txnMonto').value);
+    const monto=parseMonto(document.getElementById('txnMonto').value);
     const fecha=document.getElementById('txnFecha').value||todayStr();
     const descripcion=document.getElementById('txnDesc').value.trim();
     if(!monto||monto<=0) return;
@@ -1293,7 +1319,7 @@ function renderActivos(){
                 <option>virtual</option><option>físico</option><option>inversión</option><option>cripto</option>
               </select>
             </div>
-            <div><label class="label">Saldo inicial</label><input id="walletSaldo" class="field" type="number" placeholder="0.00"></div>
+            <div><label class="label">Saldo inicial</label><input id="walletSaldo" class="field" type="number" inputmode="decimal" placeholder="0.00"></div>
             <div><label class="label">Moneda</label>
               <select id="walletMoneda" class="field">
                 <option>ARS</option><option>USD</option><option>EUR</option><option>USDT</option><option>BTC</option>
@@ -1308,7 +1334,7 @@ function renderActivos(){
             </div>
             <div>
               <label class="label">Rendimiento anual % <span style="color:var(--text3)">(opcional — se aplica diario)</span></label>
-              <input id="walletRend" class="field" type="number" placeholder="Ej: 60 para 60% TNA" step="0.01" min="0">
+              <input id="walletRend" class="field" type="number" inputmode="decimal" placeholder="Ej: 60 para 60% TNA" step="0.01" min="0">
             </div>
             <button id="addWallet" class="btn btn-accent" style="width:100%">AGREGAR BILLETERA</button>
           </div>
@@ -1333,7 +1359,7 @@ function renderActivos(){
         <div style="margin-bottom:12px">
           <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;margin-bottom:6px">USD BLUE</div>
           <div style="display:flex;align-items:center;gap:8px">
-            <input id="qiUsd" class="field" type="number" placeholder="${state.quotes.usd||'Ej: 1400'}" step="1" style="flex:1">
+            <input id="qiUsd" class="field" type="number" inputmode="decimal" placeholder="${state.quotes.usd||'Ej: 1400'}" step="1" style="flex:1">
             <span style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap">ARS por USD</span>
           </div>
         </div>
@@ -1348,7 +1374,7 @@ function renderActivos(){
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
-            <input id="qiUsdt" class="field" type="number" placeholder="${state.quotes.usdt||'Ej: 0.9998'}" step="0.0001" style="flex:1">
+            <input id="qiUsdt" class="field" type="number" inputmode="decimal" placeholder="${state.quotes.usdt||'Ej: 0.9998'}" step="0.0001" style="flex:1">
             <span id="usdt-unit-label" style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap">USD por USDT</span>
           </div>
         </div>
@@ -1363,7 +1389,7 @@ function renderActivos(){
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
-            <input id="qiBtc" class="field" type="number" placeholder="${state.quotes.btc||'Ej: 83000'}" step="1" style="flex:1">
+            <input id="qiBtc" class="field" type="number" inputmode="decimal" placeholder="${state.quotes.btc||'Ej: 83000'}" step="1" style="flex:1">
             <span id="btc-unit-label" style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap">USD por BTC</span>
           </div>
         </div>
@@ -1485,14 +1511,14 @@ function renderActivos(){
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;min-width:300px;max-width:400px;width:100%">
         <div style="font-family:var(--mono);font-size:13px;font-weight:500;margin-bottom:16px;color:var(--text)">EDITAR — ${esc(w.nombre)}</div>
         <div class="form-stack">
-          <div><label class="label">Saldo actual</label><input id="editSaldo" class="field" type="number" value="${w.saldo}" step="0.01"></div>
+          <div><label class="label">Saldo actual</label><input id="editSaldo" class="field" type="number" inputmode="decimal" value="${w.saldo}" step="0.01"></div>
           <div>
             <label class="label">Color</label>
             <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
               <input id="editColor" type="color" value="${w.color||'#f0b90b'}" style="width:36px;height:32px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;padding:2px">
             </div>
           </div>
-          <div><label class="label">Rendimiento anual % TNA</label><input id="editRend" class="field" type="number" value="${w.rendAnual||''}" placeholder="0 = sin rendimiento" step="0.01"></div>
+          <div><label class="label">Rendimiento anual % TNA</label><input id="editRend" class="field" type="number" inputmode="decimal" value="${w.rendAnual||''}" placeholder="0 = sin rendimiento" step="0.01"></div>
         </div>
         <div style="display:flex;gap:8px;margin-top:16px">
           <button id="editSave" class="btn btn-accent" style="flex:1">GUARDAR</button>
@@ -1554,9 +1580,9 @@ function renderInversiones(){
             </div>
             <div>
               <label class="label">TNA % <span style="color:var(--text3)">(tasa nominal anual)</span></label>
-              <input id="invTna" class="field" type="number" placeholder="Ej: 75" step="0.01">
+              <input id="invTna" class="field" type="number" inputmode="decimal" placeholder="Ej: 75" step="0.01">
             </div>
-            <div><label class="label">Capital inicial</label><input id="invCapital" class="field" type="number" placeholder="0.00"></div>
+            <div><label class="label">Capital inicial</label><input id="invCapital" class="field" type="number" inputmode="decimal" placeholder="0.00"></div>
             <div>
               <label class="label">Tipo de interés</label>
               <div class="seg" style="margin-bottom:0">
@@ -1632,7 +1658,7 @@ function renderInversiones(){
                   <div style="margin-top:10px;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap">
                     <div style="display:flex;align-items:center;gap:6px">
                       <label class="label" style="display:inline;margin:0">Ajustar capital:</label>
-                      <input class="field" style="width:110px" type="number" placeholder="Nuevo capital" data-inv-cap="${inv.id}">
+                      <input class="field" style="width:110px" type="number" inputmode="decimal" placeholder="Nuevo capital" data-inv-cap="${inv.id}">
                     </div>
                     <button class="btn-danger" data-del-inv="${inv.id}">ELIMINAR</button>
                   </div>
@@ -1645,8 +1671,8 @@ function renderInversiones(){
         <div class="card">
           <div class="section-title">SIMULADOR</div>
           <div class="form-stack">
-            <div><label class="label">Capital a simular</label><input id="simCap" class="field" type="number" placeholder="100000"></div>
-            <div><label class="label">TNA %</label><input id="simTna" class="field" type="number" placeholder="75"></div>
+            <div><label class="label">Capital a simular</label><input id="simCap" class="field" type="number" inputmode="decimal" placeholder="100000"></div>
+            <div><label class="label">TNA %</label><input id="simTna" class="field" type="number" inputmode="decimal" placeholder="75"></div>
             <div>
               <label class="label">Tipo de interés</label>
               <div class="seg" style="margin-bottom:0">

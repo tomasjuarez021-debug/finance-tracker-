@@ -972,10 +972,10 @@ function renderResumen(){
   const catData=Object.entries(byCat).map(([n,v])=>({...getCat(n,tipo),val:v})).sort((a,b)=>b.val-a.val);
 
   // Encabezado: saldo según filtro
-  const totalARS=patrimonioARS();
   const fw=state.walletFilter!=='all'?state.wallets.find(w=>w.id===state.walletFilter):null;
   const headLabel=fw?fw.nombre:'Todas las cuentas';
-  const headVal=fw?(fw.moneda==='ARS'?fmt(fw.saldo):`${Number(fw.saldo||0).toLocaleString('es-AR',{maximumFractionDigits:8})} ${esc(fw.moneda)}`):fmt(totalARS);
+  // Saldo del mes seleccionado: ingresos - gastos
+  const headVal=`${mBalance<0?'-':'+'}${fmt(Math.abs(mBalance))}`;
 
   // Slots alrededor del anillo: 11 categorías + "Más"
   const cats=catsOf(tipo);
@@ -1023,7 +1023,8 @@ function renderResumen(){
       <div class="hero-top">
         <button class="hero-acc" id="accBtn">
           <span class="hero-acc-label">${esc(headLabel)} ▾</span>
-          <span class="hero-acc-val">${headVal}</span>
+          <span class="hero-acc-val" style="color:${mBalance<0?'var(--red)':'var(--green)'}">${headVal}</span>
+          <span class="hero-sub">Saldo del mes</span>
         </button>
       </div>
       <div class="acc-chips">

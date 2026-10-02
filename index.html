@@ -520,6 +520,17 @@ function walletValueARS(w){
   return null;
 }
 
+// Inversiones convertidas a ARS
+function investValueARS(i){
+  const v=walletValueARS({saldo:i.capital,moneda:i.moneda});
+  return v!==null?v:Number(i.capital||0);
+}
+function totalInvestARS(){ return state.invest.reduce((a,i)=>a+investValueARS(i),0); }
+// Patrimonio = billeteras + inversiones
+function patrimonioARS(){
+  return state.wallets.reduce((a,w)=>{const v=walletValueARS(w);return a+(v!==null?v:Number(w.saldo||0));},0) + totalInvestARS();
+}
+
 function fmtQuote(label, val, suffix=''){
   if(!val) return `<span style="color:var(--text3)">${label}: —</span>`;
   return `<span>${label}: <span style="color:var(--accent)">$${Number(val).toLocaleString('es-AR',{maximumFractionDigits:0})}${suffix}</span></span>`;
@@ -712,10 +723,7 @@ function renderMenu(){
 function updateSidebar(){
   const {totalActivos,balance} = totals();
   // Recalc totalActivos including FX conversion
-  const totalARS = state.wallets.reduce((a,w)=>{
-    const v=walletValueARS(w);
-    return a+(v!==null?v:Number(w.saldo||0));
-  },0);
+  const totalARS = patrimonioARS();
   document.getElementById('capitalTotal').textContent = fmt(totalARS);
   const el = document.getElementById('capitalNeto');
   el.textContent = `${balance>=0?'+':'-'}${fmt(Math.abs(balance))} neto`;
@@ -964,7 +972,7 @@ function renderResumen(){
   const catData=Object.entries(byCat).map(([n,v])=>({...getCat(n,tipo),val:v})).sort((a,b)=>b.val-a.val);
 
   // Encabezado: saldo según filtro
-  const totalARS=state.wallets.reduce((a,w)=>{const v=walletValueARS(w);return a+(v!==null?v:Number(w.saldo||0));},0);
+  const totalARS=patrimonioARS();
   const fw=state.walletFilter!=='all'?state.wallets.find(w=>w.id===state.walletFilter):null;
   const headLabel=fw?fw.nombre:'Todas las cuentas';
   const headVal=fw?(fw.moneda==='ARS'?fmt(fw.saldo):`${Number(fw.saldo||0).toLocaleString('es-AR',{maximumFractionDigits:8})} ${esc(fw.moneda)}`):fmt(totalARS);
@@ -1259,13 +1267,15 @@ function renderActivos(){
   const isCrypto=w=>['BTC','USDT'].includes(w.moneda);
   const valARS=w=>{const v=walletValueARS(w);return v!==null?v:Number(w.saldo||0);};
 
-  const totalARS=state.wallets.reduce((a,w)=>a+valARS(w),0);
+  const invARS=totalInvestARS();
+  const totalARS=state.wallets.reduce((a,w)=>a+valARS(w),0)+invARS;
   const pesos =state.wallets.filter(w=>w.moneda==='ARS').reduce((a,w)=>a+valARS(w),0);
   const dolares=state.wallets.filter(w=>['USD','EUR'].includes(w.moneda)).reduce((a,w)=>a+valARS(w),0);
   const cripto=state.wallets.filter(isCrypto).reduce((a,w)=>a+valARS(w),0);
 
-  const alloc=state.wallets.map((w,i)=>({w,v:valARS(w),color:w.color||PALETTE[i%PALETTE.length]})).filter(x=>x.v>0);
-  const allocBar=totalARS>0?`<div class="alloc-bar">${alloc.map(x=>`<div style="width:${x.v/totalARS*100}%;background:${x.color}" title="${esc(x.w.nombre)}"></div>`).join('')}</div>`:'';
+  const alloc=state.wallets.map((w,i)=>({n:w.nombre,v:valARS(w),color:w.color||PALETTE[i%PALETTE.length]}));
+  alloc.push({n:'Inversiones',v:invARS,color:'var(--gold2)'});
+  const allocBar=totalARS>0?`<div class="alloc-bar">${alloc.filter(x=>x.v>0).map(x=>`<div style="width:${x.v/totalARS*100}%;background:${x.color}" title="${esc(x.n)}"></div>`).join('')}</div>`:'';
 
   const quoteTiles=[
     {label:'Dólar blue', val:usd?fmt(usd).replace(/,00$/,''):'—', sub:'por USD'},
@@ -1288,6 +1298,7 @@ function renderActivos(){
         <div><span>Pesos</span><b>${fmtShort(pesos)}</b></div>
         <div><span>Dólares</span><b>${fmtShort(dolares)}</b></div>
         <div><span>Cripto</span><b>${fmtShort(cripto)}</b></div>
+        <div><span>Inversiones</span><b style="color:var(--gold2)">${fmtShort(invARS)}</b></div>
       </div>
     </div>
 
@@ -1312,6 +1323,18 @@ function renderActivos(){
               <div class="list-sub">${w.moneda!=='ARS'?(ars!==null?'≈ '+fmtShort(ars):'sin cotización'):Math.round(pct)+'%'}</div>
             </div>
           </button>`;}).join(''):`<div class="empty">Todavía no tenés billeteras</div>`}
+        ${state.invest.length?`
+          <button class="list-row" id="goInv">
+            ${catIcon({icon:'trend',color:'var(--accent)'},40)}
+            <div class="list-main">
+              <div class="list-title">Inversiones</div>
+              <div class="list-sub">${state.invest.length} ${state.invest.length===1?'inversión':'inversiones'}</div>
+            </div>
+            <div class="list-right">
+              <div class="list-amount">${fmt(invARS)}</div>
+              <div class="list-sub">${totalARS>0?Math.round(invARS/totalARS*100):0}%</div>
+            </div>
+          </button>`:''}
       </div>
 
       <div class="card">
@@ -1328,6 +1351,7 @@ function renderActivos(){
   `;
 
   document.getElementById('newWallet').onclick=()=>openWalletModal(null);
+  const goInv=document.getElementById('goInv'); if(goInv) goInv.onclick=()=>{state.tab='inversiones';render();};
   root.querySelectorAll('[data-edit-wallet]').forEach(b=>b.onclick=()=>openWalletModal(state.wallets.find(w=>w.id===Number(b.dataset.editWallet))));
   document.getElementById('editQuotes').onclick=openQuotesModal;
 }
@@ -1412,9 +1436,9 @@ const invTipo=k=>INV_TIPOS.find(t=>t.k===k)||INV_TIPOS[INV_TIPOS.length-1];
 
 function renderInversiones(){
   const root=document.getElementById('tab-inversiones');
-  const totalCap=state.invest.reduce((a,i)=>a+Number(i.capital||0),0);
+  const totalCap=totalInvestARS();
   const gan12=state.invest.reduce((a,i)=>a+proyectar(i.capital,i.tna,12,i.compuesto===true)-Number(i.capital||0),0);
-  const tnaProm=totalCap>0?state.invest.reduce((a,i)=>a+Number(i.tna||0)*Number(i.capital||0),0)/totalCap:0;
+  const tnaProm=totalCap>0?state.invest.reduce((a,i)=>a+Number(i.tna||0)*investValueARS(i),0)/totalCap:0;
 
   root.innerHTML=`
     <div class="page-head">

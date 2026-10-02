@@ -32,8 +32,25 @@
       --green: #0ecb81;
       --red: #f6465d;
       --blue: #4a9eff;
+      --hero-bg: linear-gradient(135deg,#3a2c05 0%,#1d1806 45%,#161a1f 100%);
+      --hero-border: rgba(240,185,11,.35);
+      --chip-bg: rgba(0,0,0,.25);
+      --shadow: none;
+      --overlay: rgba(0,0,0,.7);
+      --nav-bg: rgba(22,26,31,.85);
       --mono: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
       --sans: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    :root[data-theme="light"]{
+      --bg:#f4f5f7; --surface:#ffffff; --surface2:#f1f3f6; --border:#e6e8ec; --border2:#d5d9df;
+      --text:#0f172a; --text2:#64748b; --text3:#94a3b8;
+      --gold2:#a87900; --green:#059669; --red:#e11d48; --blue:#2563eb;
+      --hero-bg: linear-gradient(135deg,#fff1bd 0%,#fff9e8 55%,#ffffff 100%);
+      --hero-border: rgba(240,185,11,.5);
+      --chip-bg: rgba(255,255,255,.75);
+      --shadow: 0 1px 2px rgba(15,23,42,.04), 0 6px 20px rgba(15,23,42,.06);
+      --overlay: rgba(15,23,42,.45);
+      --nav-bg: rgba(255,255,255,.88);
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;font-family:var(--sans);background:var(--bg);color:var(--text);font-weight:400;font-size:14px}
@@ -179,12 +196,12 @@
     .wallet-pill.selected{border-color:var(--accent);color:var(--accent);background:rgba(240,185,11,.06)}
 
     /* ─── RESUMEN: HERO ─── */
-    .hero{background:linear-gradient(135deg,#3a2c05 0%,#1d1806 45%,#161a1f 100%);border:1px solid rgba(240,185,11,.35);border-radius:14px;padding:16px;margin-bottom:16px;text-align:center}
+    .hero{background:var(--hero-bg);border:1px solid var(--hero-border);border-radius:20px;padding:18px 16px;box-shadow:var(--shadow);margin-bottom:16px;text-align:center}
     .hero-acc{background:none;border:none;color:var(--text);display:flex;flex-direction:column;align-items:center;gap:2px;margin:0 auto}
     .hero-acc-label{font-size:12px;color:var(--gold2)}
     .hero-acc-val{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--text)}
     .acc-chips{display:flex;gap:6px;overflow-x:auto;padding:12px 0 4px;justify-content:center;flex-wrap:wrap}
-    .acc-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(240,185,11,.3);background:rgba(0,0,0,.25);color:var(--text2);border-radius:20px;padding:5px 12px;font-size:12px;white-space:nowrap}
+    .acc-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(240,185,11,.3);background:var(--chip-bg);color:var(--text2);border-radius:20px;padding:5px 12px;font-size:12px;white-space:nowrap}
     .acc-chip.sel{background:var(--accent);color:#0b0e11;border-color:var(--accent);font-weight:600}
     .month-nav{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.5px}
     .month-nav button{background:none;border:none;color:var(--gold2);font-size:22px;padding:0 12px}
@@ -195,7 +212,7 @@
     .btn-green{background:var(--green);color:#0b0e11}.btn-green:hover{filter:brightness(1.1)}
 
     /* ─── ANILLO DE CATEGORÍAS ─── */
-    .cat-ico{color:#fff;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+    .cat-ico{color:#fff;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;line-height:1;box-shadow:0 2px 6px rgba(0,0,0,.18)}
     .cat-ico-add{background:var(--surface2);color:var(--text2);border:1px dashed var(--border2)}
     .ring-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px 4px;align-items:center}
     .ring-slot{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:var(--text);padding:4px 0;border-radius:10px;transition:.12s;min-width:0}
@@ -221,7 +238,7 @@
     .bars-max{position:absolute;right:12px;top:2px;font-family:var(--mono);font-size:10px;color:var(--text3)}
     .bars{display:flex;align-items:flex-end;gap:2px;height:120px;border-bottom:1px solid var(--border2)}
     .bar-col{flex:1;height:100%;display:flex;flex-direction:column-reverse;cursor:pointer;border-radius:2px 2px 0 0;overflow:hidden}
-    .bar-col:hover{background:rgba(255,255,255,.04)}
+    .bar-col:hover{background:var(--surface2)}
     .bar-col.sel{background:rgba(240,185,11,.12);outline:1px solid rgba(240,185,11,.4)}
     .bars-ticks{position:relative;height:14px;font-family:var(--mono);font-size:10px;color:var(--text3)}
     .bars-ticks span{position:absolute;top:3px;transform:translateX(-50%)}
@@ -235,7 +252,7 @@
     .cat-row-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
     /* ─── MODALES / SELECTOR DE CATEGORÍAS ─── */
-    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+    .modal-bg{position:fixed;inset:0;background:var(--overlay);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
     .modal{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:14px;padding:20px;width:100%;max-width:420px;max-height:90vh;overflow:auto}
     .cat-pick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 6px}
     .cat-pick{display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:2px solid transparent;border-radius:12px;padding:6px 2px;color:var(--text2);font-size:11px;min-width:0}
@@ -250,7 +267,7 @@
     .emoji-btn.sel{border-color:var(--accent)}
     .color-grid{display:flex;flex-wrap:wrap;gap:8px}
     .color-btn{width:28px;height:28px;border-radius:50%;border:3px solid transparent}
-    .color-btn.sel{border-color:#fff}
+    .color-btn.sel{border-color:var(--text)}
 
 
     /* ─── TIPOGRAFÍA ESTILO APP ─── */
@@ -322,6 +339,25 @@
     input[type=number]{-moz-appearance:textfield}
     .bottom-nav-btn{font-family:var(--sans);font-size:11px}
 
+    /* ─── LOOK MODERNO ─── */
+    body{transition:background .2s,color .2s}
+    .card{border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:18px}
+    :root[data-theme="light"] .card{border-color:transparent}
+    :root[data-theme="light"] .bottom-nav-btn.active,:root[data-theme="light"] .tab-btn.active,:root[data-theme="light"] .tab-btn.active .icon{color:var(--gold2)}
+    :root[data-theme="light"] .wallet-pill.selected{color:var(--gold2)}
+    .modal{border-radius:22px;border-top-width:0;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+    .field{border-radius:12px;padding:11px 14px}
+    .seg{border-radius:12px;padding:4px}
+    .seg-btn{border-radius:9px;padding:9px 0}
+    .seg-btn.active:not(.seg-red):not(.seg-green){background:var(--surface)}
+    .amount-box{border-radius:16px}
+    .section-title{font-size:16px;font-weight:600}
+    .icon-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);display:inline-flex;align-items:center;justify-content:center}
+    .menu-item{display:flex;align-items:center;gap:12px;width:100%;padding:14px 4px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:15px;text-align:left;cursor:pointer}
+    .menu-item:last-child{border-bottom:none}
+    .menu-item svg{color:var(--text2)}
+    .side-theme{display:flex;align-items:center;gap:8px;justify-content:center;width:100%;margin-top:8px}
+
     /* ─── MOBILE HEADER ─── */
     .mobile-header{display:none}
     .bottom-nav{display:none}
@@ -347,20 +383,27 @@
       .cards-3{display:flex;overflow-x:auto;gap:8px;padding-bottom:4px}
       .cards-3 .card{min-width:130px;flex-shrink:0}
       .cards-3::-webkit-scrollbar{display:none}
-      .bottom-nav{display:flex;order:3;flex:none;position:relative;height:calc(60px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom) !important;background:var(--surface);border-top:1px solid var(--border);z-index:40;padding:0 4px}
+      .bottom-nav{display:flex;order:3;flex:none;position:relative;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);height:calc(62px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom) !important;background:var(--nav-bg);border-top:1px solid var(--border);z-index:40;padding:0 4px}
       .bottom-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:transparent;color:var(--text3);font-size:10px;font-family:var(--mono);padding:6px 4px;border-radius:6px;transition:.12s;letter-spacing:.3px}
       .bottom-nav-btn.active{color:var(--accent)}
     }
   </style>
+<script>
+  (function(){
+    var t=null; try{ t=localStorage.getItem('ct_theme'); }catch(e){}
+    if(!t) t=window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';
+    document.documentElement.setAttribute('data-theme',t);
+  })();
+</script>
 <script id="SAVED_DATA" type="application/json"></script>
 </head>
 <body>
 
 <header class="mobile-header">
   <div class="mobile-brand">Pulsor<span>.</span></div>
-  <div style="display:flex;gap:6px">
-    <button id="exportBtnMobile" class="btn btn-accent" style="font-size:12px;padding:6px 10px">Guardar</button>
-    <label class="btn btn-ghost" style="font-size:12px;padding:6px 10px;cursor:pointer">Restaurar<input type="file" id="importFileMobile" accept=".json,.html,application/json,text/html" style="display:none"></label>
+  <div style="display:flex;gap:8px">
+    <button class="icon-btn" data-theme-toggle aria-label="Cambiar tema"></button>
+    <button class="icon-btn" id="menuBtn" aria-label="Menú"></button>
   </div>
 </header>
 <nav class="bottom-nav" id="bottomNav"></nav>
@@ -377,6 +420,7 @@
       <div id="capitalNeto" class="sub ok">+$0,00 neto</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+      <button class="btn btn-ghost side-theme" data-theme-toggle-side></button>
       <button id="exportBtn" class="btn btn-accent" style="width:100%;font-size:11px;padding:7px">Guardar archivo</button>
       <label id="importLabel" class="btn btn-ghost" style="width:100%;font-size:11px;padding:7px;text-align:center;cursor:pointer">Restaurar backup<input type="file" id="importFile" accept=".json,.html,application/json,text/html" style="display:none"></label>
     </div>
@@ -439,9 +483,14 @@ const ICONS = {
   chevron:'<path d="m6 9 6 6 6-6"/>',
   pie:'<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>',
   list:'<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+  moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  menu:'<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
   calendar:'<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
 };
-const UI_ICONS = ['plus','chevron','calendar','pie','list'];
+const UI_ICONS = ['plus','chevron','calendar','pie','list','sun','moon','menu','download','upload'];
 const CAT_ICON_KEYS = Object.keys(ICONS).filter(k=>!UI_ICONS.includes(k));
 // Compatibilidad: categorías guardadas con emoji
 const EMOJI_TO_ICON = {"🍽️":"utensils","🎬":"film","🚌":"bus","🛒":"cart","💊":"health","🛍️":"bag","👨‍👩‍👧":"family","🏦":"bank","🎁":"gift","🏠":"home","💡":"bulb","🎓":"school","🐱":"cat","🐶":"paw","🚗":"car","⛽":"fuel","☕":"coffee","🍺":"beer","✈️":"plane","🎮":"game","📱":"phone","💪":"gym","👕":"shirt","💇":"scissors","🧾":"receipt","💳":"card","📦":"box","💼":"briefcase","💻":"laptop","📈":"trend","💹":"percent","⭐":"star","💰":"coins","🎵":"music","⚽":"ball","🏥":"cross","🍔":"pizza","🍕":"pizza","🧸":"baby","🔧":"wrench"};
@@ -1610,8 +1659,43 @@ function applyDailyYields(){
   }
 }
 
+// ─── TEMA CLARO / OSCURO ───
+function currentTheme(){ return document.documentElement.getAttribute('data-theme')||'dark'; }
+function applyThemeUI(){
+  const t=currentTheme();
+  document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.innerHTML=svgIcon(t==='dark'?'sun':'moon',18));
+  document.querySelectorAll('[data-theme-toggle-side]').forEach(b=>b.innerHTML=`${svgIcon(t==='dark'?'sun':'moon',16)} Modo ${t==='dark'?'claro':'oscuro'}`);
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', t==='dark'?'#161a1f':'#ffffff');
+}
+function toggleTheme(){
+  const t=currentTheme()==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  try{ localStorage.setItem('ct_theme',t); }catch(e){}
+  applyThemeUI();
+  render();
+}
+document.querySelectorAll('[data-theme-toggle],[data-theme-toggle-side]').forEach(b=>b.onclick=toggleTheme);
+document.getElementById('menuBtn').innerHTML=svgIcon('menu',18);
+document.getElementById('menuBtn').onclick=()=>{
+  const modal=openModal(`
+    <div class="modal-title">Pulsor</div>
+    <button class="menu-item" id="mTheme">${svgIcon(currentTheme()==='dark'?'sun':'moon',20)} Modo ${currentTheme()==='dark'?'claro':'oscuro'}</button>
+    <button class="menu-item" id="mSave">${svgIcon('download',20)} Guardar backup</button>
+    <label class="menu-item">${svgIcon('upload',20)} Restaurar backup<input type="file" id="mImport" accept=".json,.html,application/json,text/html" style="display:none"></label>`);
+  modal.querySelector('#mTheme').onclick=()=>{modal.remove();toggleTheme();};
+  modal.querySelector('#mSave').onclick=()=>{modal.remove();downloadHTML();};
+  modal.querySelector('#mImport').onchange=e=>{
+    const inp=document.getElementById('importFile');
+    inp.files=e.target.files; inp.dispatchEvent(new Event('change')); modal.remove();
+  };
+};
+applyThemeUI();
+
 // ─── MAIN RENDER ───
+let _lastTab=null;
 function render(){
+  if(_lastTab!==state.tab){ const a=document.querySelector('.app'); if(a) a.scrollTop=0; window.scrollTo(0,0); _lastTab=state.tab; }
   renderSidebarShell();
   renderMenu();
   updateSidebar();

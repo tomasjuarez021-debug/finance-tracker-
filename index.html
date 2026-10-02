@@ -259,7 +259,7 @@
     .cat-pick span:last-child{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .cat-pick:hover{background:var(--surface2)}
     .cat-pick.sel{border-color:var(--accent);background:rgba(240,185,11,.08);color:var(--text)}
-    .cat-pick-grid.small{max-height:250px;overflow:auto;padding:2px}
+    .cat-pick-grid.small{padding:2px}
     .cat-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow:auto}
     .cat-list-row{display:flex;align-items:center;gap:10px;font-size:13px}
     .emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
@@ -1224,8 +1224,17 @@ function renderMovimientos(){
   if(!state.wallets.some(w=>w.id===state.formWallet)) state.formWallet=state.wallets[0]?.id||null;
   const formCats=catsOf(state.formTipo);
   if(!formCats.some(c=>c.nombre===state.formCat)) state.formCat=formCats[0]?.nombre||'Otros';
-  const catPicker=formCats.map(c=>`<button class="cat-pick ${state.formCat===c.nombre?'sel':''}" data-fcat="${esc(c.nombre)}">${catIcon(c,38)}<span>${esc(c.nombre)}</span></button>`).join('')
-    + `<button class="cat-pick" id="fcatNew"><span class="cat-ico cat-ico-add" style="width:38px;height:38px">${svgIcon('plus',18)}</span><span>Nueva</span></button>`;
+  // Se muestran 3 filas; si no entran, la última posición es una flecha para desplegar todas
+  const LIMIT=12;
+  const catBtn=c=>`<button class="cat-pick ${state.formCat===c.nombre?'sel':''}" data-fcat="${esc(c.nombre)}">${catIcon(c,38)}<span>${esc(c.nombre)}</span></button>`;
+  const newBtn=`<button class="cat-pick" id="fcatNew"><span class="cat-ico cat-ico-add" style="width:38px;height:38px">${svgIcon('plus',18)}</span><span>Nueva</span></button>`;
+  const toggleBtn=open=>`<button class="cat-pick" id="fcatToggle"><span class="cat-ico cat-ico-add" style="width:38px;height:38px"><span style="display:inline-flex;transform:rotate(${open?180:0}deg)">${svgIcon('chevron',18)}</span></span><span>${open?'Menos':'Más'}</span></button>`;
+  const overflow=formCats.length+1>LIMIT;
+  const selHidden=formCats.findIndex(c=>c.nombre===state.formCat)>=LIMIT-1;
+  const catsOpen=state.formCatsOpen||selHidden;
+  const catPicker=!overflow ? formCats.map(catBtn).join('')+newBtn
+    : catsOpen ? formCats.map(catBtn).join('')+newBtn+toggleBtn(true)
+    : formCats.slice(0,LIMIT-1).map(catBtn).join('')+toggleBtn(false);
   const walletPills = state.wallets.map(w=>`
     <button class="wallet-pill ${state.formWallet===w.id?'selected':''}" data-wpill="${w.id}">${esc(w.nombre)} <span style="color:var(--text3)">(${fmt(w.saldo)})</span></button>
   `).join('');
@@ -1269,7 +1278,8 @@ function renderMovimientos(){
   document.getElementById('tipo-ingreso').onclick=()=>{state.formTipo='ingreso';renderMovimientos();};
 
   root.querySelectorAll('[data-fcat]').forEach(btn=>btn.onclick=()=>{state.formCat=btn.dataset.fcat;renderMovimientos();});
-  document.getElementById('fcatNew').onclick=()=>openCatModal(state.formTipo);
+  const fcatNew=document.getElementById('fcatNew'); if(fcatNew) fcatNew.onclick=()=>openCatModal(state.formTipo);
+  const fcatToggle=document.getElementById('fcatToggle'); if(fcatToggle) fcatToggle.onclick=()=>{state.formCatsOpen=!catsOpen;renderMovimientos();};
 
   root.querySelectorAll('[data-wpill]').forEach(btn=>btn.onclick=()=>{
     const id=Number(btn.dataset.wpill);

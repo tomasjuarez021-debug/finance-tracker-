@@ -358,6 +358,16 @@
     .menu-item svg{color:var(--text2)}
     .side-theme{display:flex;align-items:center;gap:8px;justify-content:center;width:100%;margin-top:8px}
 
+    /* ─── SELECTOR DE MES ─── */
+    .hero-top{position:relative}
+    .month-pick{background:none;border:none;color:var(--gold2);font-size:12px;display:inline-flex;align-items:center;gap:4px;padding:2px 6px;margin-bottom:2px;font-family:inherit}
+    .month-caret{display:inline-flex;opacity:.8}
+    .month-menu{position:absolute;top:24px;left:50%;transform:translateX(-50%);z-index:20;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.25);padding:6px;min-width:180px;max-height:240px;overflow-y:auto;display:flex;flex-direction:column}
+    .month-menu.hide{display:none}
+    .month-menu button{white-space:nowrap;background:none;border:none;color:var(--text);font-size:14px;padding:9px 14px;border-radius:9px;text-align:left;font-family:inherit}
+    .month-menu button:hover{background:var(--surface2)}
+    .month-menu button.sel{background:var(--accent);color:#0b0e11;font-weight:500}
+
     /* ─── EDITAR CATEGORÍAS ─── */
     .cat-list-row{cursor:pointer;padding:6px;border-radius:10px}
     .cat-list-row:hover,.cat-list-row.editing{background:var(--surface2)}
@@ -1072,7 +1082,20 @@ function renderResumen(){
 
   // Encabezado: saldo según filtro
   const fw=state.walletFilter!=='all'?state.wallets.find(w=>w.id===state.walletFilter):null;
-  const headLabel=fw?fw.nombre:'Todas las cuentas';
+  const monthOptions=[];
+  {
+    const now=new Date();
+    const first=state.txns.reduce((m,t)=>t.fecha&&t.fecha<m?t.fecha:m, todayStr());
+    let d=new Date(now.getFullYear(),now.getMonth(),1);
+    const min=new Date(Math.min(new Date(Number(first.slice(0,4)),Number(first.slice(5,7))-1,1), new Date(now.getFullYear(),now.getMonth()-11,1)));
+    while(d>=min){
+      const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      const l=d.toLocaleString('es-AR',{month:'long',year:'numeric'});
+      monthOptions.push({key,label:l.charAt(0).toUpperCase()+l.slice(1)});
+      d=new Date(d.getFullYear(),d.getMonth()-1,1);
+    }
+    if(!monthOptions.some(o=>o.key===monthKey)) monthOptions.unshift({key:monthKey,label:monthLabel});
+  }
   // Saldo del mes seleccionado: ingresos - gastos
   const headVal=`${mBalance<0?'-':'+'}${fmt(Math.abs(mBalance))}`;
 
@@ -1120,20 +1143,18 @@ function renderResumen(){
   root.innerHTML=`
     <div class="hero">
       <div class="hero-top">
-        <button class="hero-acc" id="accBtn">
-          <span class="hero-acc-label">${esc(headLabel)} ▾</span>
+        <button class="month-pick" id="monthBtn">${monthLabel.charAt(0).toUpperCase()+monthLabel.slice(1)} <span class="month-caret">${svgIcon('chevron',14)}</span></button>
+        <div class="month-menu hide" id="monthMenu">
+          ${monthOptions.map(o=>`<button class="${o.key===monthKey?'sel':''}" data-month="${o.key}">${o.label}</button>`).join('')}
+        </div>
+        <div class="hero-acc">
           <span class="hero-acc-val" style="color:${mBalance<0?'var(--red)':'var(--green)'}">${headVal}</span>
-          <span class="hero-sub">Saldo del mes</span>
-        </button>
+          <span class="hero-sub">Saldo del mes${fw?' · '+esc(fw.nombre):''}</span>
+        </div>
       </div>
       <div class="acc-chips">
         <button class="acc-chip ${state.walletFilter==='all'?'sel':''}" data-acc="all">Todas</button>
         ${state.wallets.map(w=>`<button class="acc-chip ${state.walletFilter===w.id?'sel':''}" data-acc="${w.id}"><span class="sw" style="background:${w.color||'var(--accent)'}"></span>${esc(w.nombre)}</button>`).join('')}
-      </div>
-      <div class="month-nav">
-        <button id="prevMonth">‹</button>
-        <span style="display:inline-flex;align-items:center;gap:8px">${svgIcon('calendar',18)} ${monthLabel.toUpperCase()}</span>
-        <button id="nextMonth">›</button>
       </div>
     </div>
 
@@ -1210,18 +1231,22 @@ function renderResumen(){
   `;
 
   root.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>{state.walletFilter=b.dataset.acc==='all'?'all':Number(b.dataset.acc);renderResumen();});
-  document.getElementById('accBtn').onclick=()=>{
-    const ids=['all',...state.wallets.map(w=>w.id)];
-    state.walletFilter=ids[(ids.indexOf(state.walletFilter)+1)%ids.length];
-    renderResumen();
+  const menu=document.getElementById('monthMenu');
+  document.getElementById('monthBtn').onclick=e=>{
+    e.stopPropagation();
+    const open=menu.classList.toggle('hide')===false;
+    if(open){
+      const sel=menu.querySelector('.sel'); if(sel) menu.scrollTop=sel.offsetTop-menu.clientHeight/2;
+      setTimeout(()=>document.addEventListener('click',()=>menu.classList.add('hide'),{once:true}));
+    }
   };
+  menu.querySelectorAll('[data-month]').forEach(b=>b.onclick=()=>{state.calDate=`${b.dataset.month}-01`;renderResumen();});
   root.querySelectorAll('[data-vt]').forEach(b=>b.onclick=()=>{state.viewTipo=b.dataset.vt;renderResumen();});
   document.getElementById('ringCenter').onclick=()=>{state.viewTipo=tipo==='gasto'?'ingreso':'gasto';renderResumen();};
   root.querySelectorAll('[data-quick]').forEach(b=>b.onclick=()=>openTxnModal(b.dataset.quick,tipo));
   document.getElementById('ringMore').onclick=()=>openAllCatsModal(tipo);
   root.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{state.calDate=`${monthKey}-${String(b.dataset.day).padStart(2,'0')}`;renderResumen();});
-  document.getElementById('prevMonth').onclick=()=>{const d=new Date(yy,mm-2,1);state.calDate=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;renderResumen();};
-  document.getElementById('nextMonth').onclick=()=>{const d=new Date(yy,mm,1);state.calDate=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;renderResumen();};
+
 }
 
 function fmtShort(n){

@@ -358,6 +358,16 @@
     .menu-item svg{color:var(--text2)}
     .side-theme{display:flex;align-items:center;gap:8px;justify-content:center;width:100%;margin-top:8px}
 
+    /* ─── REORDENAR ─── */
+    [data-sort]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:pan-y}
+    .list-row.dragging{position:relative;z-index:5;background:var(--surface);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);transform-origin:center;transition:box-shadow .15s}
+    .sorting .list-row:not(.dragging){transition:transform .15s}
+
+    /* ─── SIN DESPLAZAMIENTO LATERAL ─── */
+    html,body{overflow-x:hidden;max-width:100%;overscroll-behavior:none}
+    .app,.main,.tab-panel{overflow-x:hidden;max-width:100%}
+    .app{touch-action:pan-y}
+
     /* ─── MOBILE HEADER ─── */
     .mobile-header{display:none}
     .bottom-nav{display:none}
@@ -1355,6 +1365,7 @@ function renderActivos(){
     <div class="cards-2">
       <div class="card">
         <div class="section-title">Billeteras</div>
+        <div id="walletList">
         ${state.wallets.length?state.wallets.map((w,i)=>{
           const color=w.color||PALETTE[i%PALETTE.length];
           const ars=walletValueARS(w);
@@ -1362,7 +1373,7 @@ function renderActivos(){
           const tipo=(WALLET_TIPOS.find(t=>t.k===w.tipo)||{label:w.tipo}).label;
           const extra=w.rendAnual?` · <span style="color:var(--green)">+${fmtShort(Number(w.saldo||0)*w.rendAnual/100/12)}/mes</span>`:'';
           return `
-          <button class="list-row" data-edit-wallet="${w.id}">
+          <button class="list-row" data-edit-wallet="${w.id}" data-sort="${w.id}">
             ${catIcon({icon:walletIconKey(w),color},40)}
             <div class="list-main">
               <div class="list-title">${esc(w.nombre)}</div>
@@ -1373,6 +1384,7 @@ function renderActivos(){
               <div class="list-sub">${w.moneda!=='ARS'?(ars!==null?'≈ '+fmtShort(ars):'sin cotización'):Math.round(pct)+'%'}</div>
             </div>
           </button>`;}).join(''):`<div class="empty">Todavía no tenés billeteras</div>`}
+        </div>
         ${state.invest.length?`
           <button class="list-row" id="goInv">
             ${catIcon({icon:'trend',color:'var(--accent)'},40)}
@@ -1402,8 +1414,63 @@ function renderActivos(){
 
   document.getElementById('newWallet').onclick=()=>openWalletModal(null);
   const goInv=document.getElementById('goInv'); if(goInv) goInv.onclick=()=>{state.tab='inversiones';render();};
+  enableSort(document.getElementById('walletList'), order=>{
+    state.wallets.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
+    save('ct_wallets',state.wallets);
+    render();
+  });
   root.querySelectorAll('[data-edit-wallet]').forEach(b=>b.onclick=()=>openWalletModal(state.wallets.find(w=>w.id===Number(b.dataset.editWallet))));
   document.getElementById('editQuotes').onclick=openQuotesModal;
+}
+
+// Mantener apretado para arrastrar y reordenar filas [data-sort]
+function enableSort(container, onDone){
+  if(!container) return;
+  let timer=null, drag=null, downY=0, suppressClick=false;
+  const cancelTimer=()=>{ clearTimeout(timer); timer=null; };
+  container.querySelectorAll('[data-sort]').forEach(row=>{
+    row.addEventListener('pointerdown',e=>{
+      if(e.button>0) return;
+      downY=e.clientY;
+      const pid=e.pointerId;
+      timer=setTimeout(()=>{
+        timer=null;
+        drag={row,startY:downY};
+        try{ row.setPointerCapture(pid); }catch(_){}
+        row.classList.add('dragging');
+        container.classList.add('sorting');
+        if(navigator.vibrate) navigator.vibrate(15);
+      },380);
+    });
+  });
+  container.addEventListener('pointermove',e=>{
+    if(timer && Math.abs(e.clientY-downY)>8) cancelTimer();
+    if(!drag) return;
+    e.preventDefault();
+    const row=drag.row;
+    row.style.transform=`translateY(${e.clientY-drag.startY}px)`;
+    const rows=[...container.querySelectorAll('[data-sort]')];
+    const i=rows.indexOf(row);
+    const r=row.getBoundingClientRect(), mid=r.top+r.height/2;
+    const next=rows[i+1], prev=rows[i-1];
+    if(next){ const n=next.getBoundingClientRect(); if(mid>n.top+n.height/2){ container.insertBefore(next,row); drag.startY+=n.height; row.style.transform=`translateY(${e.clientY-drag.startY}px)`; return; } }
+    if(prev){ const p=prev.getBoundingClientRect(); if(mid<p.top+p.height/2){ container.insertBefore(row,prev); drag.startY-=p.height; row.style.transform=`translateY(${e.clientY-drag.startY}px)`; } }
+  });
+  const end=()=>{
+    cancelTimer();
+    if(!drag) return;
+    drag.row.style.transform='';
+    drag.row.classList.remove('dragging');
+    container.classList.remove('sorting');
+    drag=null; suppressClick=true;
+    setTimeout(()=>suppressClick=false,350);
+    onDone([...container.querySelectorAll('[data-sort]')].map(r=>Number(r.dataset.sort)));
+  };
+  container.addEventListener('pointerup',end);
+  container.addEventListener('pointercancel',end);
+  container.addEventListener('touchmove',e=>{ if(drag) e.preventDefault(); },{passive:false});
+  container.addEventListener('contextmenu',e=>e.preventDefault());
+  container.addEventListener('click',e=>{ if(suppressClick){ e.stopPropagation(); e.preventDefault(); } },true);
 }
 
 function openWalletModal(w){

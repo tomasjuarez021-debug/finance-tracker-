@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Pulsor">
-  <title>Pulsor</title>
-  <meta name="application-name" content="Pulsor">
+  <meta name="apple-mobile-web-app-title" content="Pulso">
+  <title>Pulso</title>
+  <meta name="application-name" content="Pulso">
   <meta name="theme-color" content="#0b0e11">
-  <link rel="apple-touch-icon" href="pulsor-icon.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="pulsor-icon.png">
-  <link rel="icon" type="image/png" href="pulsor-icon.png">
-  <link rel="shortcut icon" type="image/png" href="pulsor-icon.png">
+  <link rel="apple-touch-icon" href="pulso-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="pulso-icon.png">
+  <link rel="icon" type="image/png" href="pulso-icon.png">
+  <link rel="shortcut icon" type="image/png" href="pulso-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -358,6 +358,14 @@
     .menu-item svg{color:var(--text2)}
     .side-theme{display:flex;align-items:center;gap:8px;justify-content:center;width:100%;margin-top:8px}
 
+    /* ─── EDITAR CATEGORÍAS ─── */
+    .cat-list-row{cursor:pointer;padding:6px;border-radius:10px}
+    .cat-list-row:hover,.cat-list-row.editing{background:var(--surface2)}
+    .cat-edit-hint{color:var(--text3);display:inline-flex}
+    .color-custom{position:relative;overflow:hidden;display:inline-block;cursor:pointer}
+    .color-custom input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+    .cat-list{max-height:240px}
+
     /* ─── REORDENAR ─── */
     [data-sort]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:pan-y}
     .list-row.dragging{position:relative;z-index:5;background:var(--surface);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);transform-origin:center;transition:box-shadow .15s}
@@ -410,7 +418,7 @@
 <body>
 
 <header class="mobile-header">
-  <div class="mobile-brand">Pulsor<span>.</span></div>
+  <div class="mobile-brand">Pulso<span>.</span></div>
   <div style="display:flex;gap:8px">
     <button class="icon-btn" data-theme-toggle aria-label="Cambiar tema"></button>
     <button class="icon-btn" id="menuBtn" aria-label="Menú"></button>
@@ -422,7 +430,7 @@
 <div class="app">
   <button id="sidebarCollapse" class="sidebar-collapse" aria-label="Toggle sidebar">▶</button>
   <aside id="sidebar" class="sidebar">
-    <div class="brand">Pulsor<span>.</span></div>
+    <div class="brand">Pulso<span>.</span></div>
     <nav id="menu"></nav>
     <div class="side-card">
       <div class="k">Patrimonio total</div>
@@ -498,9 +506,10 @@ const ICONS = {
   menu:'<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>',
   download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
   upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
+  pencil:'<path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/>',
   calendar:'<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
 };
-const UI_ICONS = ['plus','chevron','calendar','pie','list','sun','moon','menu','download','upload'];
+const UI_ICONS = ['pencil','plus','chevron','calendar','pie','list','sun','moon','menu','download','upload'];
 const CAT_ICON_KEYS = Object.keys(ICONS).filter(k=>!UI_ICONS.includes(k));
 // Compatibilidad: categorías guardadas con emoji
 const EMOJI_TO_ICON = {"🍽️":"utensils","🎬":"film","🚌":"bus","🛒":"cart","💊":"health","🛍️":"bag","👨‍👩‍👧":"family","🏦":"bank","🎁":"gift","🏠":"home","💡":"bulb","🎓":"school","🐱":"cat","🐶":"paw","🚗":"car","⛽":"fuel","☕":"coffee","🍺":"beer","✈️":"plane","🎮":"game","📱":"phone","💪":"gym","👕":"shirt","💇":"scissors","🧾":"receipt","💳":"card","📦":"box","💼":"briefcase","💻":"laptop","📈":"trend","💹":"percent","⭐":"star","💰":"coins","🎵":"music","⚽":"ball","🏥":"cross","🍔":"pizza","🍕":"pizza","🧸":"baby","🔧":"wrench"};
@@ -651,10 +660,10 @@ function downloadHTML(){
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url;
-  a.download = 'pulsor.html';
+  a.download = 'pulso.html';
   a.click();
   URL.revokeObjectURL(url);
-  showToast('Backup guardado (pulsor.html)');
+  showToast('Backup guardado (pulso.html)');
 }
 
 // Monto: solo números, acepta coma o punto decimal
@@ -934,51 +943,82 @@ function openTxnModal(catNombre, tipo){
 
 // ─── GESTIÓN DE CATEGORÍAS ───
 function openCatModal(tipo, onDone){
-  let icon=CAT_ICON_KEYS[0], color=CAT_COLORS[0];
+  let icon=CAT_ICON_KEYS[0], color=CAT_COLORS[0], editing=null; // editing = nombre de la categoría en edición
   const modal=openModal(`
-    <div style="font-weight:600;font-size:15px;margin-bottom:14px">Categorías de ${tipo==='ingreso'?'ingresos':'gastos'}</div>
+    <div class="modal-title">Categorías de ${tipo==='ingreso'?'ingresos':'gastos'}</div>
     <div class="cat-list" id="cmList"></div>
     <div class="divider"></div>
-    <div class="section-title" style="margin-bottom:8px">Nueva categoría</div>
+    <div class="section-title" id="cmFormTitle" style="margin-bottom:8px">Nueva categoría</div>
     <div class="form-stack">
       <div style="display:flex;gap:10px;align-items:center">
         <span id="cmPreview"></span>
         <input id="cmNombre" class="field" type="text" placeholder="Ej: Gato, Gimnasio, Nafta…" style="flex:1">
       </div>
-      <div><label class="label">Ícono</label><div class="emoji-grid" id="cmEmojis"></div></div>
       <div><label class="label">Color</label><div class="color-grid" id="cmColors"></div></div>
+      <div><label class="label">Ícono</label><div class="emoji-grid" id="cmEmojis"></div></div>
     </div>
     <div style="display:flex;gap:8px;margin-top:16px">
-      <button id="cmSave" class="btn btn-accent" style="flex:1">AGREGAR</button>
-      <button id="cmClose" class="btn btn-ghost">CERRAR</button>
+      <button id="cmSave" class="btn btn-accent" style="flex:1">Agregar</button>
+      <button id="cmClose" class="btn btn-ghost">Cerrar</button>
     </div>`);
+  const nombreEl=modal.querySelector('#cmNombre');
+  const setMode=c=>{
+    editing=c?c.nombre:null;
+    if(c){ icon=c.icon; color=c.color; nombreEl.value=c.nombre; }
+    else { icon=CAT_ICON_KEYS[0]; color=CAT_COLORS[0]; nombreEl.value=''; }
+    modal.querySelector('#cmFormTitle').textContent=c?`Editar "${c.nombre}"`:'Nueva categoría';
+    modal.querySelector('#cmSave').textContent=c?'Guardar cambios':'Agregar';
+    modal.querySelector('#cmClose').textContent=c?'Cancelar':'Cerrar';
+    draw();
+    if(c) modal.querySelector('#cmFormTitle').scrollIntoView({behavior:'smooth',block:'start'});
+  };
   const draw=()=>{
     modal.querySelector('#cmPreview').innerHTML=catIcon({icon,color},40);
     modal.querySelector('#cmEmojis').innerHTML=CAT_ICON_KEYS.map(e=>`<button class="emoji-btn ${e===icon?'sel':''}" data-e="${e}">${svgIcon(e,20)}</button>`).join('');
-    modal.querySelector('#cmColors').innerHTML=CAT_COLORS.map(c=>`<button class="color-btn ${c===color?'sel':''}" data-c="${c}" style="background:${c}"></button>`).join('');
+    modal.querySelector('#cmColors').innerHTML=CAT_COLORS.map(c=>`<button class="color-btn ${c===color?'sel':''}" data-c="${c}" style="background:${c}"></button>`).join('')
+      + `<label class="color-btn color-custom" title="Otro color" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)"><input type="color" id="cmCustom" value="${/^#[0-9a-f]{6}$/i.test(color)?color:'#f0b90b'}"></label>`;
     modal.querySelector('#cmList').innerHTML=catsOf(tipo).map(c=>`
-      <div class="cat-list-row">${catIcon(c,30)}<span style="flex:1">${esc(c.nombre)}</span><button class="btn-danger" data-delcat="${esc(c.nombre)}">✕</button></div>`).join('') || `<div class="empty">SIN CATEGORÍAS</div>`;
+      <div class="cat-list-row ${editing===c.nombre?'editing':''}" data-editcat="${esc(c.nombre)}">${catIcon(c,30)}<span style="flex:1">${esc(c.nombre)}</span><span class="cat-edit-hint">${svgIcon('pencil',16)}</span><button class="btn-danger" data-delcat="${esc(c.nombre)}">✕</button></div>`).join('') || `<div class="empty">Sin categorías</div>`;
     modal.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{icon=b.dataset.e;draw();});
     modal.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{color=b.dataset.c;draw();});
-    modal.querySelectorAll('[data-delcat]').forEach(b=>b.onclick=()=>{
+    modal.querySelector('#cmCustom').oninput=e=>{color=e.target.value;modal.querySelector('#cmPreview').innerHTML=catIcon({icon,color},40);};
+    modal.querySelector('#cmCustom').onchange=()=>draw();
+    modal.querySelectorAll('[data-editcat]').forEach(r=>r.onclick=()=>setMode(state.cats.find(c=>c.tipo===tipo&&c.nombre===r.dataset.editcat)));
+    modal.querySelectorAll('[data-delcat]').forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
       if(!confirm(`¿Eliminar la categoría "${b.dataset.delcat}"? Los movimientos existentes se conservan.`)) return;
       state.cats=state.cats.filter(c=>!(c.tipo===tipo && c.nombre===b.dataset.delcat));
-      save('ct_cats',state.cats); draw();
+      save('ct_cats',state.cats);
+      if(editing===b.dataset.delcat) setMode(null); else draw();
     });
   };
   draw();
   const close=()=>{ modal.remove(); (onDone||render)(); };
-  modal.querySelector('#cmClose').onclick=close;
+  modal.querySelector('#cmClose').onclick=()=>{ if(editing) setMode(null); else close(); };
   modal.onclick=e=>{ if(e.target===modal) close(); };
   modal.querySelector('#cmSave').onclick=()=>{
-    const nombre=modal.querySelector('#cmNombre').value.trim();
+    const nombre=nombreEl.value.trim();
     if(!nombre) return;
-    if(state.cats.some(c=>c.tipo===tipo && c.nombre.toLowerCase()===nombre.toLowerCase())){ showToast('Esa categoría ya existe'); return; }
-    state.cats.push({nombre,tipo,icon,color});
-    save('ct_cats',state.cats);
-    modal.querySelector('#cmNombre').value='';
-    showToast(`Categoría "${nombre}" agregada`);
-    draw();
+    const dup=state.cats.some(c=>c.tipo===tipo && c.nombre.toLowerCase()===nombre.toLowerCase() && c.nombre!==editing);
+    if(dup){ showToast('Esa categoría ya existe'); return; }
+    if(editing){
+      const c=state.cats.find(x=>x.tipo===tipo&&x.nombre===editing);
+      if(nombre!==editing){ // renombrar también los movimientos
+        state.txns.forEach(t=>{ if(t.tipo===tipo&&t.categoria===editing) t.categoria=nombre; });
+        save('ct_txns',state.txns);
+        if(state.formCat===editing) state.formCat=nombre;
+      }
+      Object.assign(c,{nombre,icon,color});
+      save('ct_cats',state.cats);
+      showToast(`"${nombre}" actualizada`);
+      setMode(null);
+    } else {
+      state.cats.push({nombre,tipo,icon,color});
+      save('ct_cats',state.cats);
+      nombreEl.value='';
+      showToast(`Categoría "${nombre}" agregada`);
+      draw();
+    }
   };
 }
 
@@ -988,7 +1028,7 @@ function openAllCatsModal(tipo){
     <div style="font-weight:600;font-size:15px;margin-bottom:14px">${tipo==='ingreso'?'Ingresos':'Gastos'} — elegí una categoría</div>
     <div class="cat-pick-grid">
       ${catsOf(tipo).map(c=>`<button class="cat-pick" data-pick="${esc(c.nombre)}">${catIcon(c,44)}<span>${esc(c.nombre)}</span></button>`).join('')}
-      <button class="cat-pick" id="amNew"><span class="cat-ico cat-ico-add" style="width:44px;height:44px">${svgIcon('plus',22)}</span><span>Nueva</span></button>
+      <button class="cat-pick" id="amNew"><span class="cat-ico cat-ico-add" style="width:44px;height:44px">${svgIcon('pencil',20)}</span><span>Editar</span></button>
     </div>`);
   modal.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{modal.remove();openTxnModal(b.dataset.pick,tipo);});
   modal.querySelector('#amNew').onclick=()=>{modal.remove();openCatModal(tipo);};
@@ -1756,7 +1796,7 @@ document.querySelectorAll('[data-theme-toggle],[data-theme-toggle-side]').forEac
 document.getElementById('menuBtn').innerHTML=svgIcon('menu',18);
 document.getElementById('menuBtn').onclick=()=>{
   const modal=openModal(`
-    <div class="modal-title">Pulsor</div>
+    <div class="modal-title">Pulso</div>
     <button class="menu-item" id="mTheme">${svgIcon(currentTheme()==='dark'?'sun':'moon',20)} Modo ${currentTheme()==='dark'?'claro':'oscuro'}</button>
     <button class="menu-item" id="mSave">${svgIcon('download',20)} Guardar backup</button>
     <label class="menu-item">${svgIcon('upload',20)} Restaurar backup<input type="file" id="mImport" accept=".json,.html,application/json,text/html" style="display:none"></label>`);

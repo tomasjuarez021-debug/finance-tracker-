@@ -355,7 +355,7 @@
     .icon-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);display:inline-flex;align-items:center;justify-content:center}
     .menu-item{display:flex;align-items:center;gap:12px;width:100%;padding:14px 4px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:15px;text-align:left;cursor:pointer}
     .menu-item:last-child{border-bottom:none}
-    .menu-item svg{color:var(--text2)}
+    .menu-item svg{color:var(--text2);flex-shrink:0}
     .side-theme{display:flex;align-items:center;gap:8px;justify-content:center;width:100%;margin-top:8px}
 
     /* ─── SELECTOR DE MES ─── */
@@ -449,8 +449,8 @@
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
       <button class="btn btn-ghost side-theme" data-theme-toggle-side></button>
-      <button id="exportBtn" class="btn btn-accent" style="width:100%;font-size:11px;padding:7px">Guardar archivo</button>
-      <label id="importLabel" class="btn btn-ghost" style="width:100%;font-size:11px;padding:7px;text-align:center;cursor:pointer">Restaurar backup<input type="file" id="importFile" accept=".json,.html,application/json,text/html" style="display:none"></label>
+      <button id="exportBtn" class="btn btn-accent" style="width:100%;font-size:12px;padding:8px">Exportar datos</button>
+      <label id="importLabel" class="btn btn-ghost" style="width:100%;font-size:12px;padding:8px;text-align:center;cursor:pointer">Importar datos<input type="file" id="importFile" accept=".json,.html,application/json,text/html" style="display:none"></label>
     </div>
   </aside>
   <main class="main">
@@ -1823,14 +1823,11 @@ document.getElementById('menuBtn').onclick=()=>{
   const modal=openModal(`
     <div class="modal-title">Pulso</div>
     <button class="menu-item" id="mTheme">${svgIcon(currentTheme()==='dark'?'sun':'moon',20)} Modo ${currentTheme()==='dark'?'claro':'oscuro'}</button>
-    <button class="menu-item" id="mSave">${svgIcon('download',20)} Guardar backup</button>
-    <label class="menu-item">${svgIcon('upload',20)} Restaurar backup<input type="file" id="mImport" accept=".json,.html,application/json,text/html" style="display:none"></label>`);
+    <button class="menu-item" id="mExport">${svgIcon('download',20)} Exportar datos</button>
+    <label class="menu-item">${svgIcon('upload',20)} Importar datos<input type="file" id="mImport" accept=".json,.html,application/json,text/html" style="display:none"></label>`);
   modal.querySelector('#mTheme').onclick=()=>{modal.remove();toggleTheme();};
-  modal.querySelector('#mSave').onclick=()=>{modal.remove();downloadHTML();};
-  modal.querySelector('#mImport').onchange=e=>{
-    const inp=document.getElementById('importFile');
-    inp.files=e.target.files; inp.dispatchEvent(new Event('change')); modal.remove();
-  };
+  modal.querySelector('#mExport').onclick=()=>{modal.remove();openExportModal();};
+  modal.querySelector('#mImport').onchange=e=>{ modal.remove(); importDataFile(e.target.files[0]); e.target.value=''; };
 };
 applyThemeUI();
 
@@ -1851,41 +1848,78 @@ function render(){
 
 document.getElementById('sidebarCollapse').onclick=()=>{state.sidebarOpen=!state.sidebarOpen;renderSidebarShell()};
 
-// ─── EXPORT / IMPORT ───
-document.getElementById('exportBtn').onclick = ()=>downloadHTML();
-
-document.getElementById('importFile').onchange=(e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev)=>{
-    try {
-      // Acepta backup .json o el .html descargado (datos en SAVED_DATA)
-      const txt = ev.target.result;
-      const m = txt.match(/<script id="SAVED_DATA"[^>]*>([\s\S]*?)<\/script>/);
-      const data = JSON.parse(m ? m[1] : txt);
-      if(data.ct_txns)    { state.txns    = data.ct_txns;    localStorage.setItem('ct_txns',    JSON.stringify(state.txns)); }
-      if(data.ct_wallets) { state.wallets = data.ct_wallets; localStorage.setItem('ct_wallets', JSON.stringify(state.wallets)); }
-      if(data.ct_invest)  { state.invest  = data.ct_invest;  localStorage.setItem('ct_invest',  JSON.stringify(state.invest)); }
-      if(data.ct_quotes)  { state.quotes  = data.ct_quotes;  localStorage.setItem('ct_quotes',  JSON.stringify(state.quotes)); }
-      if(data.ct_cats)    { state.cats    = data.ct_cats;    localStorage.setItem('ct_cats',    JSON.stringify(state.cats)); }
-      render();
-      showToast('✓ Datos restaurados');
-    } catch(err) {
-      alert('Archivo inválido.');
+// ─── EXPORTAR / IMPORTAR DATOS ───
+// Guarda un archivo: en el celular usa "Compartir" (permite Guardar en Archivos), si no, descarga directa
+async function saveFile(content, filename, mime){
+  const blob=new Blob([content],{type:mime});
+  try{
+    const file=new File([blob],filename,{type:mime});
+    if(navigator.canShare && navigator.canShare({files:[file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){
+      await navigator.share({files:[file],title:filename});
+      return true;
     }
+  }catch(e){ if(e && e.name==='AbortError') return false; }
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  return true;
+}
+
+function exportJSON(){
+  const data={app:'Pulso',version:1,exportado:new Date().toISOString(),
+    ct_txns:state.txns, ct_wallets:state.wallets, ct_invest:state.invest, ct_quotes:state.quotes, ct_cats:state.cats};
+  return saveFile(JSON.stringify(data,null,2),`pulso-datos-${todayStr()}.json`,'application/json')
+    .then(ok=>{ if(ok) showToast('Datos exportados'); });
+}
+
+function exportCSV(){
+  const q=v=>{ const s=String(v??''); return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  const rows=[['Fecha','Tipo','Categoría','Monto','Moneda','Billetera','Descripción']];
+  [...state.txns].sort((a,b)=>a.fecha<b.fecha?1:-1).forEach(t=>{
+    const w=state.wallets.find(x=>x.id===t.walletId);
+    rows.push([t.fecha, t.tipo==='ingreso'?'Ingreso':'Gasto', t.categoria,
+      Number(t.monto).toLocaleString('es-AR',{useGrouping:false,maximumFractionDigits:8}),
+      w?w.moneda:'', w?w.nombre:'', t.descripcion||'']);
+  });
+  const csv='﻿'+rows.map(r=>r.map(q).join(';')).join('\r\n'); // BOM + ';' para que Excel lo abra bien
+  return saveFile(csv,`pulso-movimientos-${todayStr()}.csv`,'text/csv')
+    .then(ok=>{ if(ok) showToast('Movimientos exportados'); });
+}
+
+function openExportModal(){
+  const modal=openModal(`
+    <div class="modal-title">Exportar datos</div>
+    <button class="menu-item" id="exJson">${svgIcon('download',20)}<div><div>Copia completa</div><div class="list-sub">Todo: movimientos, billeteras, inversiones y categorías (.json). Sirve para importar después.</div></div></button>
+    <button class="menu-item" id="exCsv">${svgIcon('list',20)}<div><div>Movimientos para Excel</div><div class="list-sub">Planilla con todos los movimientos (.csv)</div></div></button>`);
+  modal.querySelector('#exJson').onclick=()=>{modal.remove();exportJSON();};
+  modal.querySelector('#exCsv').onclick=()=>{modal.remove();exportCSV();};
+}
+
+function importDataFile(file){
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    let data;
+    try{
+      // Acepta la copia .json o un .html viejo con los datos embebidos (SAVED_DATA)
+      const txt=ev.target.result;
+      const m=txt.match(/<script id="SAVED_DATA"[^>]*>([\s\S]*?)<\/script>/);
+      data=JSON.parse(m?m[1]:txt);
+    }catch(e){ alert('El archivo no es válido.'); return; }
+    if(!data || !(Array.isArray(data.ct_txns)||Array.isArray(data.ct_wallets))){ alert('El archivo no tiene datos de Pulso.'); return; }
+    const n=(data.ct_txns||[]).length, w=(data.ct_wallets||[]).length;
+    if(!confirm(`Se van a importar ${n} movimientos y ${w} billeteras.\nEsto reemplaza los datos actuales. ¿Continuar?`)) return;
+    const map={ct_txns:'txns',ct_wallets:'wallets',ct_invest:'invest',ct_quotes:'quotes',ct_cats:'cats'};
+    Object.entries(map).forEach(([k,prop])=>{ if(data[k]!==undefined){ state[prop]=data[k]; save(k,data[k]); } });
+    render();
+    showToast('Datos importados');
   };
   reader.readAsText(file);
-  e.target.value = '';
-};
+}
 
-const exportBtnMobile = document.getElementById('exportBtnMobile');
-if(exportBtnMobile) exportBtnMobile.onclick = ()=>downloadHTML();
-const importFileMobile = document.getElementById('importFileMobile');
-if(importFileMobile) importFileMobile.onchange = (e)=>{
-  document.getElementById('importFile').files = e.target.files;
-  document.getElementById('importFile').dispatchEvent(new Event('change'));
-};
+document.getElementById('exportBtn').onclick=openExportModal;
+document.getElementById('importFile').onchange=e=>{ importDataFile(e.target.files[0]); e.target.value=''; };
 applyDailyYields();
 render();
 </script>

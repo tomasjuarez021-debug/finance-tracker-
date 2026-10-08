@@ -446,10 +446,6 @@
     .dot-in{background:var(--green);box-shadow:0 0 8px var(--green)}.dot-out{background:var(--red);box-shadow:0 0 8px var(--red)}
     .filter-chip{display:inline-flex;align-items:center;gap:8px;margin-top:14px;border:none;border-radius:999px;padding:5px 12px 5px 5px;background:var(--surface);color:var(--text);font-size:13px;font-weight:500;box-shadow:var(--shadow);font-family:inherit}
     .filter-chip span:last-child{color:var(--text3);margin-left:2px}
-    .game-strip{display:flex;align-items:center;gap:10px;width:100%;margin-top:16px;border:none;border-top:1px solid var(--hero-border);background:none;color:var(--text);padding:12px 2px 0;font-family:inherit;text-align:left}
-    .lvl-badge{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:14px;color:#0b0e11;background:linear-gradient(135deg,#ffe27a,#f0b90b);box-shadow:0 4px 14px rgba(240,185,11,.45);flex-shrink:0}
-    .game-strip-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
-    .game-strip-txt b{font-size:12.5px;font-weight:600}
     .xp-bar{display:block;height:6px;border-radius:6px;background:var(--track);overflow:hidden}
     .xp-bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#f0b90b,#ffe27a);box-shadow:0 0 10px rgba(240,185,11,.6);transition:width .8s cubic-bezier(.2,.8,.2,1)}
     .xp-bar.big{height:9px;margin-top:8px}
@@ -527,11 +523,6 @@
     .bottom-nav-btn.active::before{content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);width:44px;height:30px;border-radius:12px;background:rgba(240,185,11,.14);z-index:-1}
 
     /* metas y gamificación */
-    .level-top{display:flex;align-items:center;gap:16px}
-    .lvl-big{width:76px;height:76px;flex-shrink:0;border-radius:24px;display:flex;align-items:center;justify-content:center;
-      background:linear-gradient(135deg,#ffe27a,#f0b90b);box-shadow:0 12px 30px rgba(240,185,11,.45),inset 0 2px 0 rgba(255,255,255,.6);transform:rotate(-6deg)}
-    .lvl-big span{font-family:var(--display);font-weight:700;font-size:34px;color:#0b0e11;transform:rotate(6deg)}
-    .lvl-title{font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:-.5px}
     .hero-stats b{font-family:var(--display);display:inline-flex;align-items:center;gap:4px;justify-content:center}
     .pring{position:relative;flex-shrink:0}
     .pring svg{display:block}
@@ -560,11 +551,10 @@
     .done-tag{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:600;color:#0b0e11;background:linear-gradient(135deg,#ffe27a,#f0b90b);border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:middle}
     .empty-big{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;color:var(--text2);padding:24px 10px;font-size:13px}
     .empty-big svg{color:var(--gold2);opacity:.8}
-    .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:12px}
-    .badge-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;padding:14px 8px;border-radius:16px;background:var(--surface2);opacity:.55}
-    .badge-card b{font-size:12px;font-weight:600}
-    .badge-card small{font-size:10.5px;color:var(--text3);line-height:1.25}
-    .badge-ico{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--track);color:var(--text3)}
+    .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px;margin-top:12px}
+    .badge-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;padding:9px 4px;border:none;border-radius:12px;background:var(--surface2);opacity:.5;color:var(--text);font-family:inherit}
+    .badge-card b{font-size:10.5px;font-weight:600;line-height:1.15}
+    .badge-ico{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--track);color:var(--text3)}
     .badge-card.ok{opacity:1;background:linear-gradient(180deg,rgba(240,185,11,.12),rgba(240,185,11,0)),var(--surface2)}
     .badge-card.ok .badge-ico{background:linear-gradient(135deg,#ffe27a,#f0b90b);color:#0b0e11;box-shadow:0 6px 16px rgba(240,185,11,.45)}
 
@@ -1401,7 +1391,6 @@ function renderResumen(){
   const tipoColor=tipo==='gasto'?'var(--red)':'var(--green)';
 
   const recent=filteredTxns().filter(inCat).slice(0,8);
-  const g=gameStats();
 
   root.innerHTML=`
     <div class="hero hero-main">
@@ -1428,11 +1417,6 @@ function renderResumen(){
         <div><span class="dot-in"></span>Ingresos<b>+${fmtShort(mIng)}</b></div>
         <div><span class="dot-out"></span>Gastos<b>-${fmtShort(mGas)}</b></div>
       </div>`}
-      <button class="game-strip" id="goGame">
-        <span class="lvl-badge">${g.level}</span>
-        <span class="game-strip-txt"><b>Nivel ${g.level} · ${g.title}</b><span class="xp-bar"><i style="width:${g.pct}%"></i></span></span>
-        <span class="streak">${svgIcon('flame',16)} ${g.streak}</span>
-      </button>
     </div>
 
     <div class="cards-2 resumen-grid">
@@ -1510,7 +1494,6 @@ function renderResumen(){
   document.getElementById('ringCenter').onclick=()=>{ if(catF) state.catFilter=null; else { state.viewTipo=tipo==='gasto'?'ingreso':'gasto'; } renderResumen(); };
   const clr=document.getElementById('clearCat'); if(clr) clr.onclick=()=>{state.catFilter=null;renderResumen();};
   document.getElementById('ringMore').onclick=()=>openAllCatsModal(tipo,true);
-  document.getElementById('goGame').onclick=()=>{state.tab='metas';render();};
   root.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{
     const ds=`${monthKey}-${String(b.dataset.day).padStart(2,'0')}`;
     state.selDay=state.selDay===ds?null:ds; renderResumen();
@@ -2070,8 +2053,6 @@ function applyDailyYields(){
 }
 
 // ─── GAMIFICACIÓN ───
-const LEVEL_TITLES=['Novato','Aprendiz','Ordenado','Ahorrista','Estratega','Visionario','Maestro','Magnate','Leyenda'];
-const xpForLevel=n=>50*n*(n-1);          // nivel 1: 0 · 2: 100 · 3: 300 · 4: 600 · 5: 1000…
 
 function monthsSummary(){
   const m={};
@@ -2106,9 +2087,6 @@ function gameStats(){
   const cm=months[todayStr().slice(0,7)]||{ing:0,gas:0};
   const monthSaved=cm.ing-cm.gas;
   const metaOk=state.settings.metaMensual>0 && Object.entries(months).some(([k,x])=>x.ing-x.gas>=state.settings.metaMensual);
-  const xp=manual.length*10 + green*100 + goalsDone*250 + st.best*5 + (state.invest.some(i=>i.capital>0)?50:0) + custom*20 + state.goals.length*30 + (metaOk?150:0);
-  let level=1; while(xp>=xpForLevel(level+1)) level++;
-  const base=xpForLevel(level), next=xpForLevel(level+1);
   const badges=[
     {id:'first',   icon:'star',     name:'Primer paso',     desc:'Registrá tu primer movimiento', ok:manual.length>=1},
     {id:'ten',     icon:'list',     name:'Constante',       desc:'10 movimientos registrados',    ok:manual.length>=10},
@@ -2124,8 +2102,7 @@ function gameStats(){
     {id:'investor',icon:'bank',     name:'Inversor',        desc:'Tené capital invertido',        ok:state.invest.some(i=>i.capital>0)},
     {id:'custom',  icon:'pencil',   name:'A mi manera',     desc:'Creá una categoría propia',     ok:custom>=1},
   ];
-  return {xp,level,title:LEVEL_TITLES[Math.min(level-1,LEVEL_TITLES.length-1)],pct:Math.min(100,(xp-base)/(next-base)*100),
-    toNext:next-xp,streak:st.cur,best:st.best,green,goalsDone,monthSaved,badges};
+  return {streak:st.cur,best:st.best,green,goalsDone,monthSaved,badges};
 }
 
 // Celebra logros nuevos (se recuerda por dispositivo)
@@ -2133,14 +2110,13 @@ function checkAchievements(){
   const g=gameStats();
   let seen; try{ seen=JSON.parse(localStorage.getItem('ct_seen')||'null'); }catch(e){ seen=null; }
   const unlocked=g.badges.filter(b=>b.ok).map(b=>b.id);
-  if(!seen){ try{ localStorage.setItem('ct_seen',JSON.stringify({badges:unlocked,level:g.level})); }catch(e){} return; }
+  if(!seen){ try{ localStorage.setItem('ct_seen',JSON.stringify({badges:unlocked})); }catch(e){} return; }
   const nuevos=g.badges.filter(b=>b.ok&&!seen.badges.includes(b.id));
-  const subio=g.level>seen.level;
-  if(nuevos.length||subio){
+  if(nuevos.length){
     confetti();
-    showToast(subio?`¡Subiste a nivel ${g.level}! · ${g.title}`:`Logro desbloqueado: ${nuevos[0].name}`);
+    showToast(`Logro desbloqueado: ${nuevos[0].name}`);
   }
-  try{ localStorage.setItem('ct_seen',JSON.stringify({badges:unlocked,level:Math.max(g.level,seen.level)})); }catch(e){}
+  try{ localStorage.setItem('ct_seen',JSON.stringify({badges:unlocked})); }catch(e){}
 }
 
 function confetti(){
@@ -2197,24 +2173,6 @@ function renderMetas(){
       <button id="newGoal" class="btn btn-accent btn-sm">${svgIcon('plus',16)} Meta</button>
     </div>
 
-    <div class="hero level-hero">
-      <div class="hero-glow"></div>
-      <div class="level-top">
-        <div class="lvl-big"><span>${g.level}</span></div>
-        <div style="flex:1;min-width:0;text-align:left">
-          <div class="lvl-title">${g.title}</div>
-          <div class="hero-sub" style="margin:0">Nivel ${g.level} · ${g.xp.toLocaleString('es-AR')} XP</div>
-          <div class="xp-bar big"><i style="width:${g.pct}%"></i></div>
-          <div class="hero-sub" style="margin:4px 0 0">Faltan ${g.toNext.toLocaleString('es-AR')} XP para el nivel ${g.level+1}</div>
-        </div>
-      </div>
-      <div class="hero-stats">
-        <div><span>Racha</span><b>${svgIcon('flame',15)} ${g.streak} ${g.streak===1?'día':'días'}</b></div>
-        <div><span>Mejor racha</span><b>${g.best}</b></div>
-        <div><span>Meses en verde</span><b>${g.green}</b></div>
-      </div>
-    </div>
-
     <div class="cards-2">
       <div class="card">
         <div class="head-row">
@@ -2265,14 +2223,15 @@ function renderMetas(){
         <span class="list-sub">${g.badges.filter(b=>b.ok).length} de ${g.badges.length}</span>
       </div>
       <div class="badges">
-        ${g.badges.map(b=>`<div class="badge-card ${b.ok?'ok':''}">
-          <span class="badge-ico">${svgIcon(b.ok?b.icon:'lock',22)}</span>
-          <b>${b.name}</b><small>${b.desc}</small>
-        </div>`).join('')}
+        ${g.badges.map(b=>`<button class="badge-card ${b.ok?'ok':''}" data-badge="${b.id}" title="${b.desc}">
+          <span class="badge-ico">${svgIcon(b.ok?b.icon:'lock',16)}</span>
+          <b>${b.name}</b>
+        </button>`).join('')}
       </div>
     </div>
   `;
   document.getElementById('newGoal').onclick=()=>openGoalModal(null);
+  root.querySelectorAll('[data-badge]').forEach(b=>b.onclick=()=>{ const x=g.badges.find(y=>y.id===b.dataset.badge); showToast(`${x.ok?'✓ ':''}${x.name}: ${x.desc}`); });
   document.getElementById('setMeta').onclick=openMetaMensualModal;
   root.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>openGoalDetail(state.goals.find(x=>x.id===Number(b.dataset.goal))));
 }
